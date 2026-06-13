@@ -6,14 +6,29 @@ import { nodePolyfills } from 'vite-plugin-node-polyfills';
 import { optimizeCssModules } from 'vite-plugin-optimize-css-modules';
 import tsconfigPaths from 'vite-tsconfig-paths';
 import * as dotenv from 'dotenv';
+import { fileURLToPath } from 'node:url';
+import path from 'node:path';
 
 // Load environment variables from multiple files
 dotenv.config({ path: '.env.local' });
 dotenv.config({ path: '.env' });
 dotenv.config();
 
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const bufferSsrPath = path.resolve(__dirname, 'app/shims/buffer-ssr.ts');
+
 export default defineConfig((config) => {
   return {
+    resolve: {
+      alias: config.isSsrBuild ? {
+        'buffer': bufferSsrPath,
+        'stream': 'node:stream',
+        'util': 'node:util',
+        'process': 'node:process',
+        'vite-plugin-node-polyfills/shims/buffer': bufferSsrPath,
+        'vite-plugin-node-polyfills/shims/process': 'node:process',
+      } : {},
+    },
     define: {
       'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV),
     },
@@ -21,8 +36,7 @@ export default defineConfig((config) => {
       target: 'esnext',
     },
     plugins: [
-      config.ssrBuild && ssrBannerPlugin(),
-      !config.ssrBuild && nodePolyfills({
+      !config.isSsrBuild && nodePolyfills({
         include: ['buffer', 'process', 'util', 'stream'],
         globals: {
           Buffer: true,
@@ -110,21 +124,6 @@ function chrome129IssuePlugin() {
 
         next();
       });
-    },
-  };
-}
-
-function ssrBannerPlugin() {
-  return {
-    name: 'ssrBannerPlugin',
-    renderChunk(code: string, chunk: any) {
-      if (chunk.fileName.endsWith('.js')) {
-        return {
-          code: `if (typeof globalThis.Buffer !== 'undefined' && !globalThis.Buffer.Buffer) { globalThis.Buffer.Buffer = globalThis.Buffer; }\n${code}`,
-          map: null,
-        };
-      }
-      return null;
     },
   };
 }
