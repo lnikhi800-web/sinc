@@ -66,6 +66,24 @@ interface ChatBoxProps {
 }
 
 export const ChatBox: React.FC<ChatBoxProps> = (props) => {
+  const tiers = [
+    { id: 'auto', label: 'Auto (Default)', model: 'google/gemini-2.5-flash' },
+    { id: 'advanced', label: 'Advanced', model: 'google/gemini-2.5-pro' },
+    { id: 'frontier', label: 'Frontier', model: 'anthropic/claude-3.5-sonnet' },
+  ];
+
+  const openRouter = props.providerList?.find((p) => p.name === 'OpenRouter') || props.providerList?.[0];
+  const currentTier = tiers.find((t) => t.model === props.model) || tiers[0];
+
+  const handleTierChange = (modelName: string) => {
+    if (props.setProvider && openRouter) {
+      props.setProvider(openRouter);
+    }
+    if (props.setModel) {
+      props.setModel(modelName);
+    }
+  };
+
   return (
     <div
       className={classNames(
@@ -104,36 +122,7 @@ export const ChatBox: React.FC<ChatBoxProps> = (props) => {
         <rect className={classNames(styles.PromptEffectLine)} pathLength="100" strokeLinecap="round"></rect>
         <rect className={classNames(styles.PromptShine)} x="48" y="24" width="70" height="1"></rect>
       </svg>
-      <div>
-        <ClientOnly>
-          {() => (
-            <div className={props.isModelSettingsCollapsed ? 'hidden' : ''}>
-              <ModelSelector
-                key={props.provider?.name + ':' + props.modelList.length}
-                model={props.model}
-                setModel={props.setModel}
-                modelList={props.modelList}
-                provider={props.provider}
-                setProvider={props.setProvider}
-                providerList={props.providerList || (PROVIDER_LIST as ProviderInfo[])}
-                apiKeys={props.apiKeys}
-                modelLoading={props.isModelLoading}
-              />
-              {(props.providerList || []).length > 0 &&
-                props.provider &&
-                !LOCAL_PROVIDERS.includes(props.provider.name) && (
-                  <APIKeyManager
-                    provider={props.provider}
-                    apiKey={props.apiKeys[props.provider.name] || ''}
-                    setApiKey={(key) => {
-                      props.onApiKeysChange(props.provider.name, key);
-                    }}
-                  />
-                )}
-            </div>
-          )}
-        </ClientOnly>
-      </div>
+      {/* Expanded model selectors and key warning overlays removed to keep viewport clean */}
       <FilePreview
         files={props.uploadedFiles}
         imageDataList={props.imageDataList}
@@ -307,20 +296,23 @@ export const ChatBox: React.FC<ChatBoxProps> = (props) => {
                 {props.chatMode === 'discuss' ? <span>Discuss</span> : <span />}
               </IconButton>
             )}
-            <IconButton
-              title="Model Settings"
-              className={classNames('transition-all flex items-center gap-1', {
-                'bg-bolt-elements-item-backgroundAccent text-bolt-elements-item-contentAccent':
-                  props.isModelSettingsCollapsed,
-                'bg-bolt-elements-item-backgroundDefault text-bolt-elements-item-contentDefault':
-                  !props.isModelSettingsCollapsed,
-              })}
-              onClick={() => props.setIsModelSettingsCollapsed(!props.isModelSettingsCollapsed)}
-              disabled={!props.providerList || props.providerList.length === 0}
-            >
-              <div className={`i-ph:caret-${props.isModelSettingsCollapsed ? 'right' : 'down'} text-lg`} />
-              {props.isModelSettingsCollapsed ? <span className="text-xs">{props.model}</span> : <span />}
-            </IconButton>
+            <div className="flex items-center gap-1.5 bg-bolt-elements-item-backgroundDefault hover:bg-bolt-elements-item-backgroundActive text-bolt-elements-textSecondary rounded-lg px-2.5 py-1.5 border border-bolt-elements-borderColor text-xs font-medium cursor-pointer relative group">
+              <span className="i-ph:cpu text-sm opacity-85" />
+              <span>{currentTier.label}</span>
+              <span className="i-ph:caret-down text-[10px]" />
+              <select
+                value={currentTier.model}
+                onChange={(e) => handleTierChange(e.target.value)}
+                className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
+                disabled={!props.providerList || props.providerList.length === 0}
+              >
+                {tiers.map((t) => (
+                  <option key={t.id} value={t.model} className="bg-bolt-elements-background-depth-1 text-bolt-elements-textPrimary">
+                    {t.label}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
           {props.input.length > 3 ? (
             <div className="text-xs text-bolt-elements-textTertiary">
