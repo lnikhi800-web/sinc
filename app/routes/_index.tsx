@@ -1,28 +1,341 @@
-import { json, type MetaFunction } from '@remix-run/cloudflare';
-import { ClientOnly } from 'remix-utils/client-only';
-import { BaseChat } from '~/components/chat/BaseChat';
-import { Chat } from '~/components/chat/Chat.client';
-import { Header } from '~/components/header/Header';
-import BackgroundRays from '~/components/ui/BackgroundRays';
-
-export const meta: MetaFunction = () => {
-  return [{ title: 'Bolt' }, { name: 'description', content: 'Talk with Bolt, an AI assistant from StackBlitz' }];
-};
-
-export const loader = () => json({});
-
 /**
- * Landing page component for Bolt
- * Note: Settings functionality should ONLY be accessed through the sidebar menu.
- * Do not add settings button/panel to this landing page as it was intentionally removed
- * to keep the UI clean and consistent with the design system.
+ * SINC: Landing Page
+ * Route: / (index) — shows landing if not logged in, app if logged in
  */
-export default function Index() {
+
+import { useEffect, useState, useRef } from 'react';
+import { Link } from '@remix-run/react';
+import { createClient } from '@supabase/supabase-js';
+
+function getSupabase() {
+  const url = import.meta.env.VITE_SUPABASE_URL || '';
+  const key = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+
+  if (!url || !key) {
+    return null;
+  }
+
+  return createClient(url, key);
+}
+
+const features = [
+  { icon: '⚡', title: 'AI Builds in Seconds', desc: 'Describe your app in plain English. SINC writes complete React + Vite code instantly.' },
+  { icon: '👁️', title: 'Live Preview', desc: 'See your app running live immediately. Share a real URL with anyone.' },
+  { icon: '📦', title: 'Full Code Export', desc: 'Download your complete source code. No lock-in. Real production-ready React projects.' },
+  { icon: '🔒', title: 'Private & Secure', desc: 'Your code is yours. We never sell or train on your project data.' },
+  { icon: '🤖', title: 'Multi-Model AI', desc: 'Routes to the best AI model for your task — Gemini, DeepSeek, Claude, and more.' },
+  { icon: '🚀', title: 'Deploy Instantly', desc: 'One-click deploy. Your app is live in minutes, not days.' },
+];
+
+const stats = [
+  { value: '<10s', label: 'Generation time' },
+  { value: '500+', label: 'AI Models' },
+  { value: '₹0', label: 'To start' },
+  { value: '99.9%', label: 'Uptime' },
+];
+
+export default function IndexPage() {
+  const [session, setSession] = useState<any>(null);
+  const [checking, setChecking] = useState(true);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  useEffect(() => {
+    const supabase = getSupabase();
+
+    if (supabase) {
+      supabase.auth.getSession().then(({ data: { session: s } }) => {
+        setSession(s);
+        setChecking(false);
+
+        // If logged in, redirect to app (the existing bolt.diy chat interface)
+        if (s) {
+          // Don't redirect — let the bolt.diy Outlet handle the chat UI
+        }
+      });
+    } else {
+      setChecking(false);
+    }
+  }, []);
+
+  // Particle canvas
+  useEffect(() => {
+    const canvas = canvasRef.current;
+
+    if (!canvas) {
+      return;
+    }
+
+    const ctx = canvas.getContext('2d')!;
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    const particles = Array.from({ length: 50 }, () => ({
+      x: Math.random() * canvas.width,
+      y: Math.random() * canvas.height,
+      vx: (Math.random() - 0.5) * 0.4,
+      vy: (Math.random() - 0.5) * 0.4,
+      size: Math.random() * 1.5 + 0.5,
+      opacity: Math.random() * 0.4 + 0.1,
+    }));
+
+    let animId: number;
+
+    function draw() {
+      ctx.clearRect(0, 0, canvas!.width, canvas!.height);
+
+      particles.forEach((p) => {
+        p.x += p.vx;
+        p.y += p.vy;
+
+        if (p.x < 0 || p.x > canvas!.width) {
+          p.vx *= -1;
+        }
+
+        if (p.y < 0 || p.y > canvas!.height) {
+          p.vy *= -1;
+        }
+
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(123,95,255,${p.opacity})`;
+        ctx.fill();
+
+        particles.forEach((p2) => {
+          const dx = p.x - p2.x;
+          const dy = p.y - p2.y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+
+          if (dist < 100) {
+            ctx.beginPath();
+            ctx.moveTo(p.x, p.y);
+            ctx.lineTo(p2.x, p2.y);
+            ctx.strokeStyle = `rgba(123,95,255,${0.06 * (1 - dist / 100)})`;
+            ctx.lineWidth = 0.5;
+            ctx.stroke();
+          }
+        });
+      });
+      animId = requestAnimationFrame(draw);
+    }
+
+    draw();
+
+    const handleResize = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    };
+
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      cancelAnimationFrame(animId);
+      window.removeEventListener('resize', handleResize);
+    };
+  }, []);
+
+  if (checking) {
+    return (
+      <div style={{ minHeight: '100vh', background: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ textAlign: 'center' }}>
+          <img src="/sinc-logo.png" alt="SINC" style={{ width: 64, height: 64, borderRadius: 16, animation: 'pulse 2s infinite', boxShadow: '0 0 40px rgba(123,95,255,0.5)' }} />
+          <div style={{ color: '#555', fontSize: 13, marginTop: 16, fontFamily: 'Space Grotesk, sans-serif' }}>Loading SINC...</div>
+        </div>
+      </div>
+    );
+  }
+
+  // If logged in, show the bolt.diy chat UI directly (it renders via Outlet)
+  if (session) {
+    return null; // Let parent route handle
+  }
+
+  // Landing page for unauthenticated users
   return (
-    <div className="flex flex-col h-full w-full bg-bolt-elements-background-depth-1">
-      <BackgroundRays />
-      <Header />
-      <ClientOnly fallback={<BaseChat />}>{() => <Chat />}</ClientOnly>
+    <div style={{ minHeight: '100vh', background: '#000000', color: '#fff', fontFamily: 'Inter, sans-serif', position: 'relative', overflow: 'hidden' }}>
+      <canvas ref={canvasRef} style={{ position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 0 }} />
+
+      {/* Background glows */}
+      <div style={{ position: 'fixed', inset: 0, background: 'radial-gradient(ellipse 80% 60% at 50% 0%, rgba(123,95,255,0.1) 0%, transparent 70%)', pointerEvents: 'none', zIndex: 0 }} />
+      <div style={{ position: 'fixed', inset: 0, backgroundImage: 'linear-gradient(rgba(123,95,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(123,95,255,0.03) 1px, transparent 1px)', backgroundSize: '40px 40px', pointerEvents: 'none', zIndex: 0 }} />
+
+      {/* Header */}
+      <header style={{ position: 'relative', zIndex: 10, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 32px', borderBottom: '1px solid rgba(123,95,255,0.1)', backdropFilter: 'blur(8px)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <img src="/sinc-logo.png" alt="SINC" style={{ width: 40, height: 40, borderRadius: 12, boxShadow: '0 0 20px rgba(123,95,255,0.4)' }} />
+          <span style={{ fontFamily: 'Orbitron, sans-serif', fontWeight: 900, fontSize: 20, letterSpacing: '0.15em', background: 'linear-gradient(135deg, #A78BFA, #60D4F5)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>SINC</span>
+        </div>
+        <nav style={{ display: 'flex', alignItems: 'center', gap: 24 }}>
+          <Link to="/pricing" style={{ color: '#888', textDecoration: 'none', fontSize: 14, fontFamily: 'Space Grotesk, sans-serif', transition: 'color 0.2s' }}>Pricing</Link>
+          <Link to="/auth" style={{ padding: '8px 18px', background: 'rgba(123,95,255,0.15)', border: '1px solid rgba(123,95,255,0.3)', borderRadius: 10, color: '#A78BFA', textDecoration: 'none', fontSize: 14, fontWeight: 500 }}>Sign In</Link>
+          <Link to="/auth" style={{ padding: '8px 18px', background: 'linear-gradient(135deg, #7B5FFF, #5B3FDF)', borderRadius: 10, color: '#fff', textDecoration: 'none', fontSize: 14, fontWeight: 600, boxShadow: '0 0 20px rgba(123,95,255,0.3)' }}>Start Free ⚡</Link>
+        </nav>
+      </header>
+
+      {/* Hero */}
+      <section style={{ position: 'relative', zIndex: 10, textAlign: 'center', padding: 'clamp(60px, 10vw, 120px) 24px 80px' }}>
+        <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'rgba(123,95,255,0.1)', border: '1px solid rgba(123,95,255,0.3)', borderRadius: 100, padding: '6px 18px', fontSize: 12, color: '#A78BFA', fontFamily: 'Space Grotesk, sans-serif', marginBottom: 28 }}>
+          ⚡ Synchronized Intelligence &amp; Coding — Made in India 🇮🇳
+        </div>
+
+        <img
+          src="/sinc-logo.png"
+          alt="SINC"
+          style={{ width: 100, height: 100, borderRadius: 28, display: 'block', margin: '0 auto 32px', boxShadow: '0 0 60px rgba(123,95,255,0.5), 0 0 120px rgba(96,212,245,0.15)', animation: 'float 3s ease-in-out infinite' }}
+        />
+
+        <h1 style={{ fontFamily: 'Orbitron, sans-serif', fontSize: 'clamp(36px, 6vw, 72px)', fontWeight: 900, lineHeight: 1.12, marginBottom: 20, maxWidth: 900, margin: '0 auto 20px' }}>
+          Build Full Apps with<br />
+          <span style={{ background: 'linear-gradient(135deg, #A78BFA, #7B5FFF, #60D4F5)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>AI in Seconds</span>
+        </h1>
+
+        <p style={{ color: '#888', fontSize: 'clamp(16px, 2vw, 20px)', maxWidth: 580, margin: '0 auto 40px', lineHeight: 1.7 }}>
+          Describe your app in plain English. SINC builds a complete React + Vite application, generates a live preview, and lets you download the code — instantly.
+        </p>
+
+        <div style={{ display: 'flex', gap: 16, justifyContent: 'center', flexWrap: 'wrap' }}>
+          <Link to="/auth" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '15px 36px', background: 'linear-gradient(135deg, #7B5FFF, #5B3FDF)', borderRadius: 14, color: '#fff', textDecoration: 'none', fontSize: 16, fontWeight: 700, fontFamily: 'Space Grotesk, sans-serif', boxShadow: '0 0 30px rgba(123,95,255,0.4)' }}>
+            ⚡ Start Building — Free
+          </Link>
+          <Link to="/pricing" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '15px 28px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 14, color: '#ccc', textDecoration: 'none', fontSize: 16, fontFamily: 'Space Grotesk, sans-serif' }}>
+            View Pricing →
+          </Link>
+        </div>
+      </section>
+
+      {/* App Preview mockup */}
+      <section style={{ position: 'relative', zIndex: 10, maxWidth: 1100, margin: '0 auto', padding: '0 24px 80px' }}>
+        <div style={{ borderRadius: 20, overflow: 'hidden', border: '1px solid rgba(123,95,255,0.25)', boxShadow: '0 0 80px rgba(123,95,255,0.12), 0 40px 80px rgba(0,0,0,0.6)', background: '#0e0e1c' }}>
+          {/* Window chrome */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '12px 16px', background: '#12121f', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+            <div style={{ width: 12, height: 12, borderRadius: '50%', background: '#FF5F57' }} />
+            <div style={{ width: 12, height: 12, borderRadius: '50%', background: '#FFBD2E' }} />
+            <div style={{ width: 12, height: 12, borderRadius: '50%', background: '#28C840' }} />
+            <div style={{ flex: 1, height: 26, background: '#1a1a2e', borderRadius: 6, display: 'flex', alignItems: 'center', paddingLeft: 12, marginLeft: 8 }}>
+              <span style={{ color: '#555', fontSize: 12, fontFamily: 'Inter, sans-serif' }}>sinc.dev/workspace/my-app</span>
+            </div>
+          </div>
+          {/* 3-panel workspace */}
+          <div style={{ display: 'grid', gridTemplateColumns: '160px 1fr 1fr', height: 320 }}>
+            {/* File tree */}
+            <div style={{ borderRight: '1px solid rgba(255,255,255,0.06)', padding: 12, background: '#0a0a14' }}>
+              <div style={{ fontSize: 10, color: '#444', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 12, fontFamily: 'Space Grotesk, sans-serif' }}>Files</div>
+              {['src/', 'App.tsx', 'index.css', 'components/'].map((f, i) => (
+                <div key={i} style={{ padding: '5px 8px', borderRadius: 6, fontSize: 12, color: i === 1 ? '#A78BFA' : '#555', background: i === 1 ? 'rgba(123,95,255,0.1)' : 'transparent', marginBottom: 2, fontFamily: 'Inter, sans-serif' }}>
+                  {f.endsWith('/') ? '📁 ' : '📄 '}{f}
+                </div>
+              ))}
+            </div>
+            {/* Chat */}
+            <div style={{ borderRight: '1px solid rgba(255,255,255,0.06)', display: 'flex', flexDirection: 'column' }}>
+              <div style={{ padding: '8px 12px', borderBottom: '1px solid rgba(255,255,255,0.06)', fontSize: 11, color: '#555', fontFamily: 'Space Grotesk, sans-serif' }}>💬 AI Chat</div>
+              <div style={{ flex: 1, padding: 12, display: 'flex', flexDirection: 'column', gap: 10, overflow: 'hidden' }}>
+                <div style={{ alignSelf: 'flex-end', background: 'rgba(123,95,255,0.2)', border: '1px solid rgba(123,95,255,0.3)', borderRadius: '12px 12px 4px 12px', padding: '8px 12px', fontSize: 12, color: '#ddd', maxWidth: '80%' }}>
+                  Build me a SaaS landing page with pricing
+                </div>
+                <div style={{ alignSelf: 'flex-start', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px 12px 12px 4px', padding: '8px 12px', fontSize: 12, color: '#aaa', maxWidth: '85%' }}>
+                  <span style={{ color: '#A78BFA', fontWeight: 600 }}>SINC</span><br />
+                  Building your SaaS landing page... ✨ Creating Hero, Features & Pricing sections
+                </div>
+              </div>
+              <div style={{ padding: '8px 12px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+                <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, padding: '8px 12px', fontSize: 12, color: '#444', fontFamily: 'Inter, sans-serif' }}>
+                  ⚡ Describe changes...
+                </div>
+              </div>
+            </div>
+            {/* Preview */}
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+              <div style={{ padding: '8px 12px', borderBottom: '1px solid rgba(255,255,255,0.06)', fontSize: 11, color: '#555', fontFamily: 'Space Grotesk, sans-serif' }}>👁️ Live Preview</div>
+              <div style={{ flex: 1, background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <div style={{ textAlign: 'center', padding: 24 }}>
+                  <div style={{ fontSize: 20, fontWeight: 800, color: '#1a1a2e', marginBottom: 8 }}>LaunchPad SaaS</div>
+                  <div style={{ fontSize: 13, color: '#666', marginBottom: 16 }}>Scale your business with AI</div>
+                  <div style={{ display: 'inline-block', background: '#7B5FFF', color: '#fff', fontSize: 12, padding: '8px 20px', borderRadius: 8 }}>Start Free Trial</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Stats */}
+      <section style={{ position: 'relative', zIndex: 10, borderTop: '1px solid rgba(255,255,255,0.04)', borderBottom: '1px solid rgba(255,255,255,0.04)', padding: '48px 24px', background: 'rgba(14,14,28,0.4)' }}>
+        <div style={{ maxWidth: 800, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 24 }}>
+          {stats.map((s, i) => (
+            <div key={i} style={{ textAlign: 'center' }}>
+              <div style={{ fontFamily: 'Orbitron, sans-serif', fontWeight: 900, fontSize: 36, background: 'linear-gradient(135deg, #A78BFA, #7B5FFF)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text', marginBottom: 4 }}>{s.value}</div>
+              <div style={{ color: '#555', fontSize: 13, fontFamily: 'Space Grotesk, sans-serif' }}>{s.label}</div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Features */}
+      <section style={{ position: 'relative', zIndex: 10, maxWidth: 1100, margin: '0 auto', padding: '80px 24px' }}>
+        <div style={{ textAlign: 'center', marginBottom: 56 }}>
+          <h2 style={{ fontFamily: 'Orbitron, sans-serif', fontSize: 'clamp(28px, 4vw, 42px)', fontWeight: 800, marginBottom: 12 }}>
+            Built for{' '}
+            <span style={{ background: 'linear-gradient(135deg, #C9956A, #E8B88A)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>Indian Builders</span>
+          </h2>
+          <p style={{ color: '#666', maxWidth: 480, margin: '0 auto' }}>Everything you need to go from idea to deployed app</p>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 20 }}>
+          {features.map((f, i) => (
+            <div
+              key={i}
+              style={{ background: 'rgba(14,14,28,0.8)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 16, padding: 24, backdropFilter: 'blur(8px)', transition: 'border-color 0.2s, transform 0.2s' }}
+              onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'rgba(123,95,255,0.3)'; e.currentTarget.style.transform = 'translateY(-2px)'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.06)'; e.currentTarget.style.transform = 'translateY(0)'; }}
+            >
+              <div style={{ fontSize: 28, marginBottom: 12 }}>{f.icon}</div>
+              <div style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 600, fontSize: 15, color: '#fff', marginBottom: 8 }}>{f.title}</div>
+              <div style={{ color: '#666', fontSize: 14, lineHeight: 1.6 }}>{f.desc}</div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* CTA */}
+      <section style={{ position: 'relative', zIndex: 10, padding: '80px 24px', textAlign: 'center' }}>
+        <div style={{ maxWidth: 600, margin: '0 auto', background: 'linear-gradient(135deg, rgba(123,95,255,0.1), rgba(96,212,245,0.05))', border: '1px solid rgba(123,95,255,0.25)', borderRadius: 24, padding: 'clamp(40px, 6vw, 64px) 40px', backdropFilter: 'blur(12px)' }}>
+          <img src="/sinc-logo.png" alt="SINC" style={{ width: 56, height: 56, borderRadius: 14, marginBottom: 20, boxShadow: '0 0 30px rgba(123,95,255,0.5)' }} />
+          <h2 style={{ fontFamily: 'Orbitron, sans-serif', fontSize: 'clamp(24px, 4vw, 38px)', fontWeight: 900, marginBottom: 12 }}>Ready to Build?</h2>
+          <p style={{ color: '#888', fontSize: 16, marginBottom: 32, lineHeight: 1.6 }}>
+            Join thousands of Indian developers building with SINC. Start free — no credit card required.
+          </p>
+          <div style={{ display: 'flex', gap: 14, justifyContent: 'center', flexWrap: 'wrap' }}>
+            <Link to="/auth" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '14px 32px', background: 'linear-gradient(135deg, #7B5FFF, #5B3FDF)', borderRadius: 12, color: '#fff', textDecoration: 'none', fontSize: 15, fontWeight: 700, fontFamily: 'Space Grotesk, sans-serif', boxShadow: '0 0 24px rgba(123,95,255,0.4)' }}>
+              ⚡ Start Free
+            </Link>
+            <Link to="/pricing" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '14px 24px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12, color: '#ccc', textDecoration: 'none', fontSize: 15, fontFamily: 'Space Grotesk, sans-serif' }}>
+              Pricing →
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer style={{ position: 'relative', zIndex: 10, borderTop: '1px solid rgba(255,255,255,0.04)', padding: '32px 24px' }}>
+        <div style={{ maxWidth: 1100, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <img src="/sinc-logo.png" alt="SINC" style={{ width: 28, height: 28, borderRadius: 8 }} />
+            <span style={{ fontFamily: 'Orbitron, sans-serif', fontWeight: 700, fontSize: 14, letterSpacing: '0.12em', background: 'linear-gradient(135deg, #A78BFA, #60D4F5)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>SINC</span>
+            <span style={{ color: '#444', fontSize: 12 }}>Synchronized Intelligence &amp; Coding</span>
+          </div>
+          <div style={{ display: 'flex', gap: 20, fontSize: 13, color: '#555' }}>
+            <Link to="/pricing" style={{ color: '#555', textDecoration: 'none' }}>Pricing</Link>
+            <a href="mailto:hello@sinc.dev" style={{ color: '#555', textDecoration: 'none' }}>Contact</a>
+            <span>© 2025 SINC · Built in India 🇮🇳</span>
+          </div>
+        </div>
+      </footer>
+
+      <style>{`
+        @keyframes float {
+          0%, 100% { transform: translateY(0px); }
+          50% { transform: translateY(-10px); }
+        }
+      `}</style>
     </div>
   );
 }

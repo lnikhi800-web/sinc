@@ -1,0 +1,39 @@
+{
+  "version": 2,
+  "framework": "remix",
+  "buildCommand": "pnpm run build",
+  "installCommand": "pnpm install",
+  "outputDirectory": "build/client",
+  "rewrites": [
+    { "source": "/api/(.*)", "destination": "/api/$1" },
+    { "source": "/auth", "destination": "/auth" },
+    { "source": "/pricing", "destination": "/pricing" },
+    { "source": "/(.*)", "destination": "/$1" }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "X-Content-Type-Options", "value": "nosniff" },
+        { "key": "X-Frame-Options", "value": "SAMEORIGIN" },
+        { "key": "X-XSS-Protection", "value": "1; mode=block" },
+        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" }
+      ]
+    },
+    {
+      "source": "/api/razorpay-webhook",
+      "headers": [
+        { "key": "Access-Control-Allow-Origin", "value": "https://api.razorpay.com" }
+      ]
+    }
+  ],
+  "env": {
+    "OPEN_ROUTER_API_KEY": "@sinc_openrouter_key",
+    "VITE_SUPABASE_URL": "@sinc_supabase_url",
+    "VITE_SUPABASE_ANON_KEY": "@sinc_supabase_anon_key",
+    "SUPABASE_SERVICE_KEY": "@sinc_supabase_service_key",
+    "RAZORPAY_KEY_ID": "@sinc_razorpay_key_id",
+    "RAZORPAY_KEY_SECRET": "@sinc_razorpay_key_secret",
+    "RAZORPAY_WEBHOOK_SECRET": "@sinc_razorpay_webhook_secret"
+  }
+}

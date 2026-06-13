@@ -1,8 +1,7 @@
+// SINC: Static preview route — loads from Supabase Storage URL
+// Route: /webcontainer/preview/:id
 import { json, type LoaderFunctionArgs } from '@remix-run/cloudflare';
 import { useLoaderData } from '@remix-run/react';
-import { useCallback, useEffect, useRef, useState } from 'react';
-
-const PREVIEW_CHANNEL = 'preview-updates';
 
 export async function loader({ params }: LoaderFunctionArgs) {
   const previewId = params.id;
@@ -14,83 +13,34 @@ export async function loader({ params }: LoaderFunctionArgs) {
   return json({ previewId });
 }
 
-export default function WebContainerPreview() {
+export default function SincPreview() {
   const { previewId } = useLoaderData<typeof loader>();
-  const iframeRef = useRef<HTMLIFrameElement>(null);
-  const broadcastChannelRef = useRef<BroadcastChannel>();
-  const [previewUrl, setPreviewUrl] = useState('');
 
-  // Handle preview refresh
-  const handleRefresh = useCallback(() => {
-    if (iframeRef.current && previewUrl) {
-      // Force a clean reload
-      iframeRef.current.src = '';
-      requestAnimationFrame(() => {
-        if (iframeRef.current) {
-          iframeRef.current.src = previewUrl;
-        }
-      });
-    }
-  }, [previewUrl]);
+  // The actual Supabase URL is passed via postMessage or query param
+  const supabaseUrl = typeof window !== 'undefined'
+    ? new URLSearchParams(window.location.search).get('url') || ''
+    : '';
 
-  // Notify other tabs that this preview is ready
-  const notifyPreviewReady = useCallback(() => {
-    if (broadcastChannelRef.current && previewUrl) {
-      broadcastChannelRef.current.postMessage({
-        type: 'preview-ready',
-        previewId,
-        url: previewUrl,
-        timestamp: Date.now(),
-      });
-    }
-  }, [previewId, previewUrl]);
-
-  useEffect(() => {
-    const supportsBroadcastChannel = typeof window !== 'undefined' && typeof window.BroadcastChannel === 'function';
-
-    if (supportsBroadcastChannel) {
-      broadcastChannelRef.current = new window.BroadcastChannel(PREVIEW_CHANNEL);
-
-      // Listen for preview updates
-      broadcastChannelRef.current.onmessage = (event) => {
-        if (event.data.previewId === previewId) {
-          if (event.data.type === 'refresh-preview' || event.data.type === 'file-change') {
-            handleRefresh();
-          }
-        }
-      };
-    } else {
-      broadcastChannelRef.current = undefined;
-    }
-
-    // Construct the WebContainer preview URL
-    const url = `https://${previewId}.local-credentialless.webcontainer-api.io`;
-    setPreviewUrl(url);
-
-    // Set the iframe src
-    if (iframeRef.current) {
-      iframeRef.current.src = url;
-    }
-
-    // Notify other tabs that this preview is ready
-    notifyPreviewReady();
-
-    // Cleanup
-    return () => {
-      broadcastChannelRef.current?.close();
-    };
-  }, [previewId, handleRefresh, notifyPreviewReady]);
+  if (!supabaseUrl) {
+    return (
+      <div className="w-full h-full flex items-center justify-center" style={{ background: '#0a0a0f' }}>
+        <div style={{ textAlign: 'center', color: '#7B5FFF', fontFamily: 'Orbitron, sans-serif' }}>
+          <div style={{ fontSize: 32, marginBottom: 12 }}>⚡</div>
+          <div style={{ fontSize: 14, color: '#888' }}>Preview loading...</div>
+          <div style={{ fontSize: 10, color: '#555', marginTop: 8 }}>ID: {previewId}</div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full h-full">
       <iframe
-        ref={iframeRef}
-        title="WebContainer Preview"
+        title="SINC Preview"
+        src={supabaseUrl}
         className="w-full h-full border-none"
-        sandbox="allow-scripts allow-forms allow-popups allow-modals allow-storage-access-by-user-activation allow-same-origin"
-        allow="cross-origin-isolated"
+        sandbox="allow-scripts allow-forms allow-popups allow-modals allow-same-origin"
         loading="eager"
-        onLoad={notifyPreviewReady}
       />
     </div>
   );
