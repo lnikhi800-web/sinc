@@ -183,13 +183,13 @@ export default function IndexPage() {
           style={{ width: 100, height: 100, borderRadius: 28, display: 'block', margin: '0 auto 32px', boxShadow: '0 0 60px rgba(123,95,255,0.5), 0 0 120px rgba(96,212,245,0.15)', animation: 'float 3s ease-in-out infinite' }}
         />
 
-        <h1 style={{ fontFamily: 'Orbitron, sans-serif', fontSize: 'clamp(36px, 6vw, 72px)', fontWeight: 900, lineHeight: 1.12, marginBottom: 20, maxWidth: 900, margin: '0 auto 20px' }}>
-          Build Full Apps with<br />
-          <span style={{ background: 'linear-gradient(135deg, #A78BFA, #7B5FFF, #60D4F5)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>AI in Seconds</span>
+        <h1 style={{ fontFamily: 'Orbitron, sans-serif', fontSize: 'clamp(36px, 6vw, 72px)', fontWeight: 900, lineHeight: 1.12, marginBottom: 20, maxWidth: 1000, margin: '0 auto 20px' }}>
+          Build Full Apps and Software<br />
+          <span style={{ background: 'linear-gradient(135deg, #A78BFA, #7B5FFF, #60D4F5)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>with SINC in Seconds</span>
         </h1>
 
-        <p style={{ color: '#888', fontSize: 'clamp(16px, 2vw, 20px)', maxWidth: 580, margin: '0 auto 40px', lineHeight: 1.7 }}>
-          Describe your app in plain English. SINC builds a complete React + Vite application, generates a live preview, and lets you download the code — instantly.
+        <p style={{ color: '#888', fontSize: 'clamp(16px, 2vw, 20px)', maxWidth: 620, margin: '0 auto 40px', lineHeight: 1.7 }}>
+          Describe your software in plain English. SINC builds a complete React + Vite application, generates a live preview, and lets you download the code — instantly.
         </p>
 
         <div style={{ display: 'flex', gap: 16, justifyContent: 'center', flexWrap: 'wrap' }}>
