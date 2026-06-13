@@ -21,7 +21,7 @@ export default defineConfig((config) => {
       target: 'esnext',
     },
     plugins: [
-      nodePolyfills({
+      !config.ssrBuild && nodePolyfills({
         include: ['buffer', 'process', 'util', 'stream'],
         globals: {
           Buffer: true,
