@@ -450,6 +450,10 @@ function FuturisticLogo() {
   );
 }
 
+export async function loader() {
+  return { id: undefined };
+}
+
 export default function IndexPage() {
   const [session, setSession] = useState<any>(null);
   const [checking, setChecking] = useState(true);
