@@ -74,6 +74,17 @@ export const Menu = () => {
   const [selectionMode, setSelectionMode] = useState(false);
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
 
+  const [isDesktop, setIsDesktop] = useState(false);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsDesktop(window.innerWidth >= 1024);
+    };
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   const { filteredItems: filteredList, handleSearchChange } = useSearchFilter({
     items: list,
     searchFields: ['description'],
@@ -279,6 +290,11 @@ export const Menu = () => {
   }, [open, selectionMode]);
 
   useEffect(() => {
+    if (isDesktop) {
+      setOpen(true);
+      return;
+    }
+
     const enterThreshold = 20;
     const exitThreshold = 20;
 
@@ -301,7 +317,7 @@ export const Menu = () => {
     return () => {
       window.removeEventListener('mousemove', onMouseMove);
     };
-  }, [isSettingsOpen]);
+  }, [isSettingsOpen, isDesktop]);
 
   const handleDuplicate = async (id: string) => {
     await duplicateCurrentChat(id);
@@ -326,19 +342,32 @@ export const Menu = () => {
     <>
       <motion.div
         ref={menuRef}
-        initial="closed"
-        animate={open ? 'open' : 'closed'}
+        initial={isDesktop ? 'open' : 'closed'}
+        animate={isDesktop ? 'open' : (open ? 'open' : 'closed')}
         variants={menuVariants}
-        style={{ width: '340px' }}
+        style={{ width: isDesktop ? '280px' : '300px' }}
         className={classNames(
-          'flex selection-accent flex-col side-menu fixed top-0 h-full rounded-r-2xl',
-          'bg-white dark:bg-gray-950 border-r border-bolt-elements-borderColor',
-          'shadow-sm text-sm',
-          isSettingsOpen ? 'z-40' : 'z-sidebar',
+          'flex selection-accent flex-col side-menu transition-all duration-300 text-sm',
+          isDesktop
+            ? 'relative h-full flex-shrink-0 bg-gray-950 dark:bg-[#06060c] border-r border-purple-500/10 shadow-none'
+            : 'fixed top-0 h-full rounded-r-2xl bg-white dark:bg-gray-950 border-r border-bolt-elements-borderColor shadow-sm',
+          isSettingsOpen ? 'z-40' : (isDesktop ? '' : 'z-sidebar'),
         )}
       >
-        <div className="h-12 flex items-center justify-between px-4 border-b border-gray-100 dark:border-gray-800/50 bg-gray-50/50 dark:bg-gray-900/50 rounded-tr-2xl">
-          <div className="text-gray-900 dark:text-white font-medium"></div>
+        <div className={classNames(
+          "h-12 flex items-center justify-between px-4 border-b border-gray-100 dark:border-gray-800/50",
+          isDesktop ? "bg-gray-900/30" : "bg-gray-50/50 dark:bg-gray-900/50 rounded-tr-2xl"
+        )}>
+          <div className="text-gray-900 dark:text-white font-medium flex items-center gap-2">
+            {isDesktop && (
+              <>
+                <img src="/sinc-logo.png" alt="SINC" className="w-6 h-6 rounded-md" />
+                <span style={{ fontFamily: 'Orbitron, sans-serif', fontWeight: 700, fontSize: '0.9rem', letterSpacing: '0.12em', background: 'linear-gradient(135deg, #A78BFA, #60D4F5)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
+                  SINC
+                </span>
+              </>
+            )}
+          </div>
           <div className="flex items-center gap-3">
             <HelpButton onClick={() => window.open('https://stackblitz-labs.github.io/bolt.diy/', '_blank')} />
             <span className="font-medium text-sm text-gray-900 dark:text-white truncate">

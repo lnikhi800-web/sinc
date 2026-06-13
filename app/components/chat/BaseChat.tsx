@@ -348,15 +348,21 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
         data-chat-visible={showChat}
       >
         <ClientOnly>{() => <Menu />}</ClientOnly>
-        <div className="flex flex-col lg:flex-row overflow-y-auto w-full h-full">
+        <div className="flex-1 flex flex-col lg:flex-row overflow-y-auto h-full w-0">
           <div className={classNames(styles.Chat, 'flex flex-col flex-grow lg:min-w-[var(--chat-min-width)] h-full')}>
             {!chatStarted && (
-              <div id="intro" className="mt-[16vh] max-w-2xl mx-auto text-center px-4 lg:px-0">
-                <h1 className="text-3xl lg:text-6xl font-bold text-bolt-elements-textPrimary mb-4 animate-fade-in">
-                  Where ideas begin
+              <div id="intro" className="mt-[12vh] max-w-3xl mx-auto text-center px-4 lg:px-0 flex flex-col items-center">
+                {/* Announcement Pill */}
+                <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-purple-500/10 border border-purple-500/20 text-xs text-purple-300 mb-6 font-medium animate-fade-in shadow-[0_0_15px_rgba(168,85,247,0.1)]">
+                  <span className="i-ph:sparkle-fill text-purple-400" />
+                  <span>Synchronized Intelligence &amp; Coding — Made in India 🇮🇳</span>
+                </div>
+
+                <h1 className="text-4xl lg:text-7.xl font-bold text-bolt-elements-textPrimary mb-4 animate-fade-in tracking-tight font-display">
+                  What will you <span className="bg-gradient-to-r from-purple-400 via-pink-400 to-cyan-400 bg-clip-text text-transparent">build</span> today?
                 </h1>
                 <p className="text-md lg:text-xl mb-8 text-bolt-elements-textSecondary animate-fade-in animation-delay-200">
-                  Bring ideas to life in seconds or get help on existing projects.
+                  Create stunning apps &amp; websites by chatting with SINC.
                 </p>
               </div>
             )}

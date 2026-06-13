@@ -87,13 +87,7 @@ export const ChatBox: React.FC<ChatBoxProps> = (props) => {
   return (
     <div
       className={classNames(
-        'relative bg-bolt-elements-background-depth-2 backdrop-blur p-3 rounded-lg border border-bolt-elements-borderColor relative w-full max-w-chat mx-auto z-prompt',
-
-        /*
-         * {
-         *   'sticky bottom-2': chatStarted,
-         * },
-         */
+        'relative bg-bolt-elements-background-depth-2/85 backdrop-blur-lg p-4 rounded-2xl border border-purple-500/20 hover:border-purple-500/40 focus-within:border-cyan-500/50 shadow-[0_4px_30px_rgba(0,0,0,0.4),0_0_20px_rgba(168,85,247,0.15)] transition-all duration-300 w-full max-w-chat mx-auto z-prompt',
       )}
     >
       <svg className={classNames(styles.PromptEffectContainer)}>
@@ -320,7 +314,6 @@ export const ChatBox: React.FC<ChatBoxProps> = (props) => {
               <kbd className="kdb px-1.5 py-0.5 rounded bg-bolt-elements-background-depth-2">Return</kbd> a new line
             </div>
           ) : null}
-          <SupabaseConnection />
           <ExpoQrModal open={props.qrModalOpen} onClose={() => props.setQrModalOpen(false)} />
         </div>
       </div>
