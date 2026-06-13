@@ -34,7 +34,7 @@ const stats = [
   { value: '99.9%', label: 'Uptime' },
 ];
 
-const logoStyles = `
+const landingStyles = `
   @keyframes spin {
     from { transform: rotate(0deg); }
     to { transform: rotate(360deg); }
@@ -51,6 +51,57 @@ const logoStyles = `
   @keyframes tech-blink {
     0%, 100% { opacity: 1; }
     50% { opacity: 0.4; }
+  }
+  @keyframes marquee-scroll {
+    0% { transform: translate3d(0, 0, 0); }
+    100% { transform: translate3d(-50%, 0, 0); }
+  }
+
+  .sinc-top-banner {
+    background: rgba(201, 149, 106, 0.05);
+    border-bottom: 1px solid rgba(201, 149, 106, 0.18);
+    padding: 10px 0;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    overflow: hidden;
+    position: relative;
+    z-index: 100;
+    width: 100%;
+    box-shadow: 0 1px 15px rgba(201, 149, 106, 0.03);
+  }
+
+  .sinc-top-banner-container {
+    display: flex;
+    white-space: nowrap;
+    width: max-content;
+  }
+
+  .sinc-top-banner-text {
+    background: linear-gradient(135deg, #E8B88A, #C9956A);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    padding: 0 40px;
+    display: inline-block;
+  }
+
+  @media (min-width: 641px) {
+    .sinc-top-banner-container {
+      margin: 0 auto;
+      justify-content: center;
+      width: 100%;
+    }
+    .sinc-top-banner-text:last-child {
+      display: none !important;
+    }
+  }
+
+  @media (max-width: 640px) {
+    .sinc-top-banner-container {
+      animation: marquee-scroll 18s linear infinite;
+    }
   }
 
   .sinc-logo-container {
@@ -277,7 +328,6 @@ function FuturisticLogo() {
 
   return (
     <div className="sinc-logo-container" ref={containerRef}>
-      <style dangerouslySetInnerHTML={{ __html: logoStyles }} />
       
       {/* Outer scifi rings */}
       <div className="sinc-ring-outer" />
@@ -513,7 +563,16 @@ export default function IndexPage() {
   // Landing page for unauthenticated users
   return (
     <div style={{ minHeight: '100vh', background: '#000000', color: '#fff', fontFamily: 'Inter, sans-serif', position: 'relative', overflow: 'hidden' }}>
+      <style dangerouslySetInnerHTML={{ __html: landingStyles }} />
       <canvas ref={canvasRef} style={{ position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 0 }} />
+
+      {/* Top Banner (Bronze / Made in India announcement with marquee scroll on mobile) */}
+      <div className="sinc-top-banner">
+        <div className="sinc-top-banner-container">
+          <span className="sinc-top-banner-text">⚡ Synchronized Intelligence &amp; Coding — Made in India 🇮🇳</span>
+          <span className="sinc-top-banner-text">⚡ Synchronized Intelligence &amp; Coding — Made in India 🇮🇳</span>
+        </div>
+      </div>
 
       {/* Background glows */}
       <div style={{ position: 'fixed', inset: 0, background: 'radial-gradient(ellipse 80% 60% at 50% 0%, rgba(123,95,255,0.1) 0%, transparent 70%)', pointerEvents: 'none', zIndex: 0 }} />
@@ -533,11 +592,7 @@ export default function IndexPage() {
       </header>
 
       {/* Hero */}
-      <section style={{ position: 'relative', zIndex: 10, textAlign: 'center', padding: 'clamp(60px, 10vw, 120px) 24px 80px' }}>
-        <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'rgba(123,95,255,0.1)', border: '1px solid rgba(123,95,255,0.3)', borderRadius: 100, padding: '6px 18px', fontSize: 12, color: '#A78BFA', fontFamily: 'Space Grotesk, sans-serif', marginBottom: 28 }}>
-          ⚡ Synchronized Intelligence &amp; Coding — Made in India 🇮🇳
-        </div>
-
+      <section style={{ position: 'relative', zIndex: 10, textAlign: 'center', padding: 'clamp(40px, 8vw, 80px) 24px 80px' }}>
         <FuturisticLogo />
 
         <h1 style={{ fontFamily: 'Orbitron, sans-serif', fontSize: 'clamp(36px, 6vw, 72px)', fontWeight: 900, lineHeight: 1.12, marginBottom: 20, maxWidth: 1000, margin: '0 auto 20px' }}>
