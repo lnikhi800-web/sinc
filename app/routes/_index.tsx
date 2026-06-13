@@ -34,6 +34,367 @@ const stats = [
   { value: '99.9%', label: 'Uptime' },
 ];
 
+const logoStyles = `
+  @keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+  @keyframes spin-reverse {
+    from { transform: rotate(360deg); }
+    to { transform: rotate(0deg); }
+  }
+  @keyframes scan {
+    0% { top: -5%; }
+    50% { top: 105%; }
+    100% { top: -5%; }
+  }
+  @keyframes tech-blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  .sinc-logo-container {
+    position: relative;
+    width: 380px;
+    height: 380px;
+    margin: 0 auto 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .sinc-logo-card {
+    width: 250px;
+    height: 250px;
+    cursor: pointer;
+    border-radius: 60px;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(8, 8, 16, 0.88);
+    border: 1.5px solid rgba(123, 95, 255, 0.45);
+    transform-style: preserve-3d;
+    transition: box-shadow 0.3s ease, border-color 0.3s ease, transform 0.5s cubic-bezier(0.25, 1, 0.5, 1);
+    overflow: hidden;
+  }
+
+  .sinc-logo-card.hovered {
+    box-shadow: 0 40px 80px -15px rgba(123, 95, 255, 0.75), 
+                0 0 60px rgba(96, 212, 245, 0.45), 
+                inset 0 0 30px rgba(255, 255, 255, 0.25);
+    border-color: rgba(96, 212, 245, 0.7);
+  }
+
+  .sinc-logo-card.normal {
+    box-shadow: 0 20px 45px -10px rgba(123, 95, 255, 0.45), 
+                0 0 35px rgba(123, 95, 255, 0.2), 
+                inset 0 0 12px rgba(255, 255, 255, 0.1);
+  }
+
+  .sinc-ring-outer {
+    position: absolute;
+    inset: -52px;
+    border-radius: 50%;
+    border: 1.5px dashed rgba(123, 95, 255, 0.35);
+    animation: spin 30s linear infinite;
+    pointer-events: none;
+    transition: border-color 0.3s, opacity 0.3s;
+  }
+  .sinc-logo-container:hover .sinc-ring-outer {
+    border-color: rgba(123, 95, 255, 0.65);
+    border-width: 2px;
+  }
+
+  .sinc-ring-middle {
+    position: absolute;
+    inset: -34px;
+    border-radius: 50%;
+    border: 1.2px dotted rgba(96, 212, 245, 0.3);
+    animation: spin-reverse 20s linear infinite;
+    pointer-events: none;
+  }
+  .sinc-logo-container:hover .sinc-ring-middle {
+    border-color: rgba(96, 212, 245, 0.6);
+  }
+
+  .sinc-ring-inner {
+    position: absolute;
+    inset: -16px;
+    border-radius: 50%;
+    border: 2px solid rgba(244, 63, 94, 0.12);
+    border-top-color: rgba(244, 63, 94, 0.5);
+    border-bottom-color: rgba(244, 63, 94, 0.5);
+    animation: spin 10s linear infinite;
+    pointer-events: none;
+  }
+  .sinc-logo-container:hover .sinc-ring-inner {
+    border-top-color: rgba(244, 63, 94, 0.85);
+    border-bottom-color: rgba(244, 63, 94, 0.85);
+  }
+
+  .sinc-hud-label {
+    position: absolute;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 9px;
+    letter-spacing: 0.18em;
+    color: rgba(255, 255, 255, 0.35);
+    text-transform: uppercase;
+    transition: color 0.3s, opacity 0.3s;
+    pointer-events: none;
+  }
+  .sinc-logo-container:hover .sinc-hud-label {
+    color: rgba(255, 255, 255, 0.85);
+    text-shadow: 0 0 8px rgba(96, 212, 245, 0.4);
+  }
+
+  .sinc-hud-tl { top: -20px; left: -20px; }
+  .sinc-hud-tr { top: -20px; right: -20px; }
+  .sinc-hud-bl { bottom: -20px; left: -20px; }
+  .sinc-hud-br { bottom: -20px; right: -20px; }
+
+  .sinc-hud-bracket {
+    position: absolute;
+    width: 24px;
+    height: 24px;
+    transition: all 0.35s cubic-bezier(0.25, 1, 0.5, 1);
+    pointer-events: none;
+    z-index: 10;
+  }
+  .sinc-bracket-tl {
+    top: -30px;
+    left: -30px;
+    border-left: 2px solid rgba(123, 95, 255, 0.4);
+    border-top: 2px solid rgba(123, 95, 255, 0.4);
+  }
+  .sinc-bracket-tr {
+    top: -30px;
+    right: -30px;
+    border-right: 2px solid rgba(123, 95, 255, 0.4);
+    border-top: 2px solid rgba(123, 95, 255, 0.4);
+  }
+  .sinc-bracket-bl {
+    bottom: -30px;
+    left: -30px;
+    border-left: 2px solid rgba(123, 95, 255, 0.4);
+    border-bottom: 2px solid rgba(123, 95, 255, 0.4);
+  }
+  .sinc-bracket-br {
+    bottom: -30px;
+    right: -30px;
+    border-right: 2px solid rgba(123, 95, 255, 0.4);
+    border-bottom: 2px solid rgba(123, 95, 255, 0.4);
+  }
+
+  .sinc-logo-container:hover .sinc-bracket-tl {
+    transform: translate(-6px, -6px);
+    border-color: rgba(96, 212, 245, 0.85);
+  }
+  .sinc-logo-container:hover .sinc-bracket-tr {
+    transform: translate(6px, -6px);
+    border-color: rgba(96, 212, 245, 0.85);
+  }
+  .sinc-logo-container:hover .sinc-bracket-bl {
+    transform: translate(-6px, 6px);
+    border-color: rgba(96, 212, 245, 0.85);
+  }
+  .sinc-logo-container:hover .sinc-bracket-br {
+    transform: translate(6px, 6px);
+    border-color: rgba(96, 212, 245, 0.85);
+  }
+
+  @media (max-width: 640px) {
+    .sinc-logo-container {
+      width: 280px;
+      height: 280px;
+      margin-bottom: 24px;
+    }
+    .sinc-logo-card {
+      width: 190px;
+      height: 190px;
+      border-radius: 48px;
+    }
+    .sinc-ring-outer { inset: -35px; }
+    .sinc-ring-middle { inset: -22px; }
+    .sinc-ring-inner { inset: -10px; }
+    .sinc-hud-label {
+      display: none !important;
+    }
+    .sinc-hud-bracket {
+      display: none !important;
+    }
+  }
+`;
+
+function FuturisticLogo() {
+  const [coords, setCoords] = useState({ x: 0, y: 0 });
+  const [isHovered, setIsHovered] = useState(false);
+  const [isPressed, setIsPressed] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!containerRef.current) return;
+    const rect = containerRef.current.getBoundingClientRect();
+    const width = rect.width;
+    const height = rect.height;
+    
+    // Mouse coordinates relative to card center
+    const mouseX = e.clientX - rect.left - width / 2;
+    const mouseY = e.clientY - rect.top - height / 2;
+
+    // Limit rotation angle (max 15 degrees)
+    const rotateX = -(mouseY / (height / 2)) * 15;
+    const rotateY = (mouseX / (width / 2)) * 15;
+
+    setCoords({ x: rotateY, y: rotateX });
+  };
+
+  const handleMouseLeave = () => {
+    setIsHovered(false);
+    setCoords({ x: 0, y: 0 });
+  };
+
+  const handleMouseEnter = () => {
+    setIsHovered(true);
+  };
+
+  const transformStyle = {
+    transform: `perspective(1000px) rotateX(${coords.y}deg) rotateY(${coords.x}deg) scale(${isPressed ? 0.95 : isHovered ? 1.04 : 1})`,
+    transition: isHovered ? 'transform 0.08s ease-out' : 'transform 0.4s cubic-bezier(0.25, 1, 0.5, 1)',
+  };
+
+  // Telemetry status texts
+  const [secStatus, setSecStatus] = useState("ACTIVE");
+  useEffect(() => {
+    if (!isHovered) return;
+    const interval = setInterval(() => {
+      const statuses = ["ACTIVE", "SYNCED", "STABLE", "OPTIMIZED"];
+      const randomStatus = statuses[Math.floor(Math.random() * statuses.length)];
+      setSecStatus(randomStatus);
+    }, 3000);
+    return () => clearInterval(interval);
+  }, [isHovered]);
+
+  return (
+    <div className="sinc-logo-container" ref={containerRef}>
+      <style dangerouslySetInnerHTML={{ __html: logoStyles }} />
+      
+      {/* Outer scifi rings */}
+      <div className="sinc-ring-outer" />
+      <div className="sinc-ring-middle" />
+      <div className="sinc-ring-inner" />
+
+      {/* Sci-Fi HUD Corner Brackets */}
+      <div className="sinc-hud-bracket sinc-bracket-tl" />
+      <div className="sinc-hud-bracket sinc-bracket-tr" />
+      <div className="sinc-hud-bracket sinc-bracket-bl" />
+      <div className="sinc-hud-bracket sinc-bracket-br" />
+
+      {/* HUD Telemetry Labels */}
+      <div className="sinc-hud-label sinc-hud-tl">
+        <span style={{ display: 'inline-block', width: 6, height: 6, borderRadius: '50%', background: '#4ade80', marginRight: 6, animation: 'tech-blink 1.5s infinite' }} />
+        SYS_LOAD: {secStatus}
+      </div>
+      <div className="sinc-hud-label sinc-hud-tr">
+        INTELLIGENCE: 100%
+      </div>
+      <div className="sinc-hud-label sinc-hud-bl">
+        MODEL: MULTI_AI_v4
+      </div>
+      <div className="sinc-hud-label sinc-hud-br">
+        GRID: SECURE
+      </div>
+
+      {/* Glow aura behind the card (parallax depth layer: translateZ(-25px)) */}
+      <div style={{
+        position: 'absolute',
+        inset: -10,
+        borderRadius: '50%',
+        background: 'radial-gradient(circle, rgba(123,95,255,0.35) 0%, transparent 70%)',
+        filter: 'blur(25px)',
+        opacity: isHovered ? 1 : 0.45,
+        transform: 'translateZ(-25px)',
+        transition: 'opacity 0.3s, transform 0.3s',
+        pointerEvents: 'none'
+      }} />
+
+      {/* Main card */}
+      <div
+        onMouseMove={handleMouseMove}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+        onMouseDown={() => setIsPressed(true)}
+        onMouseUp={() => setIsPressed(false)}
+        className={`sinc-logo-card ${isHovered ? 'hovered' : 'normal'}`}
+        style={transformStyle}
+      >
+        {/* Parallax Layer 1: Matrix grid backing */}
+        <div style={{
+          position: 'absolute',
+          inset: 0,
+          backgroundImage: 'linear-gradient(rgba(123,95,255,0.15) 1px, transparent 1px), linear-gradient(90deg, rgba(123,95,255,0.15) 1px, transparent 1px)',
+          backgroundSize: '16px 16px',
+          opacity: isHovered ? 0.35 : 0.15,
+          borderRadius: 62,
+          transform: 'translateZ(10px)',
+          transition: 'opacity 0.3s',
+          pointerEvents: 'none'
+        }} />
+
+        {/* Parallax Layer 2: Core Logo Image (floats at translateZ(45px)) */}
+        <div style={{
+          position: 'absolute',
+          inset: 15,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          transform: 'translateZ(45px)',
+          filter: isHovered ? 'drop-shadow(0 15px 30px rgba(123,95,255,0.55))' : 'none',
+          transition: 'filter 0.3s',
+          pointerEvents: 'none'
+        }}>
+          <img
+            src="/sinc-logo.png"
+            alt="SINC"
+            style={{
+              width: '100%',
+              height: '100%',
+              objectFit: 'cover',
+              borderRadius: 48,
+              border: '1px solid rgba(255,255,255,0.08)'
+            }}
+          />
+        </div>
+
+        {/* Parallax Layer 3: Sweeping Sci-Fi Laser Scanline */}
+        <div style={{
+          position: 'absolute',
+          left: 0,
+          right: 0,
+          height: '2px',
+          background: 'linear-gradient(90deg, transparent, rgba(96,212,245,0.6), transparent)',
+          animation: 'scan 4s linear infinite',
+          zIndex: 8,
+          pointerEvents: 'none',
+          transform: 'translateZ(55px)',
+        }} />
+
+        {/* Parallax Layer 4: Dynamic Holographic Cursor Glare */}
+        <div style={{
+          position: 'absolute',
+          inset: 0,
+          background: `radial-gradient(circle 200px at ${50 + coords.x * 3}% ${50 - coords.y * 3}%, rgba(255,255,255,0.2) 0%, transparent 80%)`,
+          pointerEvents: 'none',
+          zIndex: 9,
+          mixBlendMode: 'overlay',
+          transform: 'translateZ(65px)',
+          borderRadius: 62
+        }} />
+      </div>
+    </div>
+  );
+}
+
 export default function IndexPage() {
   const [session, setSession] = useState<any>(null);
   const [checking, setChecking] = useState(true);
@@ -177,11 +538,7 @@ export default function IndexPage() {
           ⚡ Synchronized Intelligence &amp; Coding — Made in India 🇮🇳
         </div>
 
-        <img
-          src="/sinc-logo.png"
-          alt="SINC"
-          style={{ width: 100, height: 100, borderRadius: 28, display: 'block', margin: '0 auto 32px', boxShadow: '0 0 60px rgba(123,95,255,0.5), 0 0 120px rgba(96,212,245,0.15)', animation: 'float 3s ease-in-out infinite' }}
-        />
+        <FuturisticLogo />
 
         <h1 style={{ fontFamily: 'Orbitron, sans-serif', fontSize: 'clamp(36px, 6vw, 72px)', fontWeight: 900, lineHeight: 1.12, marginBottom: 20, maxWidth: 1000, margin: '0 auto 20px' }}>
           Build Full Apps and Software<br />
