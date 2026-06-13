@@ -21,6 +21,7 @@ export default defineConfig((config) => {
       target: 'esnext',
     },
     plugins: [
+      config.ssrBuild && ssrBannerPlugin(),
       !config.ssrBuild && nodePolyfills({
         include: ['buffer', 'process', 'util', 'stream'],
         globals: {
@@ -109,6 +110,21 @@ function chrome129IssuePlugin() {
 
         next();
       });
+    },
+  };
+}
+
+function ssrBannerPlugin() {
+  return {
+    name: 'ssrBannerPlugin',
+    renderChunk(code: string, chunk: any) {
+      if (chunk.fileName.endsWith('.js')) {
+        return {
+          code: `if (typeof globalThis.Buffer !== 'undefined' && !globalThis.Buffer.Buffer) { globalThis.Buffer.Buffer = globalThis.Buffer; }\n${code}`,
+          map: null,
+        };
+      }
+      return null;
     },
   };
 }
