@@ -26,14 +26,5 @@
         { "key": "Access-Control-Allow-Origin", "value": "https://api.razorpay.com" }
       ]
     }
-  ],
-  "env": {
-    "OPEN_ROUTER_API_KEY": "@sinc_openrouter_key",
-    "VITE_SUPABASE_URL": "@sinc_supabase_url",
-    "VITE_SUPABASE_ANON_KEY": "@sinc_supabase_anon_key",
-    "SUPABASE_SERVICE_KEY": "@sinc_supabase_service_key",
-    "RAZORPAY_KEY_ID": "@sinc_razorpay_key_id",
-    "RAZORPAY_KEY_SECRET": "@sinc_razorpay_key_secret",
-    "RAZORPAY_WEBHOOK_SECRET": "@sinc_razorpay_webhook_secret"
-  }
+  ]
 }
