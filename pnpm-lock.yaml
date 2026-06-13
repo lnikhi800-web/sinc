@@ -173,6 +173,9 @@ importers:
       '@remix-run/react':
         specifier: ^2.15.2
         version: 2.16.8(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.8.3)
+      '@remix-run/server-runtime':
+        specifier: 2.16.8
+        version: 2.16.8(typescript@5.8.3)
       '@supabase/supabase-js':
         specifier: ^2.108.1
         version: 2.108.1
