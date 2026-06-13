@@ -6,6 +6,11 @@
 import { useEffect, useState, useRef } from 'react';
 import { Link } from '@remix-run/react';
 import { createClient } from '@supabase/supabase-js';
+import { ClientOnly } from 'remix-utils/client-only';
+import { BaseChat } from '~/components/chat/BaseChat';
+import { Chat } from '~/components/chat/Chat.client';
+import { Header } from '~/components/header/Header';
+import BackgroundRays from '~/components/ui/BackgroundRays';
 
 function getSupabase() {
   const url = import.meta.env.VITE_SUPABASE_URL || '';
@@ -555,9 +560,15 @@ export default function IndexPage() {
     );
   }
 
-  // If logged in, show the bolt.diy chat UI directly (it renders via Outlet)
+  // If logged in, show the SINC chat UI directly
   if (session) {
-    return null; // Let parent route handle
+    return (
+      <div className="flex flex-col h-full w-full bg-bolt-elements-background-depth-1">
+        <BackgroundRays />
+        <Header />
+        <ClientOnly fallback={<BaseChat />}>{() => <Chat />}</ClientOnly>
+      </div>
+    );
   }
 
   // Landing page for unauthenticated users
