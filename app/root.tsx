@@ -22,6 +22,8 @@ const toastAnimation = cssTransition({
   exit: 'animated fadeOutRight',
 });
 
+export const config = { runtime: 'edge' };
+
 export const links: LinksFunction = () => [
   {
     rel: 'icon',
