@@ -67,17 +67,17 @@ interface ChatBoxProps {
 
 export const ChatBox: React.FC<ChatBoxProps> = (props) => {
   const tiers = [
-    { id: 'auto', label: 'Auto (Default)', model: 'google/gemini-2.5-flash' },
-    { id: 'advanced', label: 'Advanced', model: 'google/gemini-2.5-pro' },
-    { id: 'frontier', label: 'Frontier', model: 'anthropic/claude-3.5-sonnet' },
+    { id: 'auto', label: 'Auto (Default)', model: 'meta/llama-3.3-70b-instruct' },
+    { id: 'advanced', label: 'Advanced', model: 'nvidia/llama-3.1-nemotron-70b-instruct' },
+    { id: 'frontier', label: 'Frontier', model: 'nvidia/nemotron-4-340b-instruct' },
   ];
 
-  const openRouter = props.providerList?.find((p) => p.name === 'OpenRouter') || props.providerList?.[0];
+  const nvidiaProvider = props.providerList?.find((p) => p.name === 'NVIDIA') || props.providerList?.find((p) => p.name === 'OpenRouter') || props.providerList?.[0];
   const currentTier = tiers.find((t) => t.model === props.model) || tiers[0];
 
   const handleTierChange = (modelName: string) => {
-    if (props.setProvider && openRouter) {
-      props.setProvider(openRouter);
+    if (props.setProvider && nvidiaProvider) {
+      props.setProvider(nvidiaProvider);
     }
     if (props.setModel) {
       props.setModel(modelName);

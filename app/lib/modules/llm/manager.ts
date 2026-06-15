@@ -201,6 +201,12 @@ export class LLMManager {
   }
 
   getDefaultProvider(): BaseProvider {
+    const nvidia = this._providers.get('NVIDIA');
+
+    if (nvidia) {
+      return nvidia;
+    }
+
     const openRouter = this._providers.get('OpenRouter');
 
     if (openRouter) {
