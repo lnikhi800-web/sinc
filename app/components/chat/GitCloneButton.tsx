@@ -171,35 +171,30 @@ ${escapeBoltTags(file.content)}
         variant="default"
         size="lg"
         className={classNames(
-          'gap-2 bg-bolt-elements-background-depth-1',
-          'text-bolt-elements-textPrimary',
-          'hover:bg-bolt-elements-background-depth-2',
-          'border border-bolt-elements-borderColor',
-          'h-10 px-4 py-2 min-w-[120px] justify-center',
-          'transition-all duration-200 ease-in-out',
+          'gap-2 bg-gradient-to-r from-purple-600 to-cyan-600 text-white font-medium hover:from-purple-500 hover:to-cyan-500 border border-purple-500/30 shadow-[0_0_15px_rgba(168,85,247,0.15)] rounded-xl h-10 px-5 py-2 min-w-[130px] justify-center transition-all duration-200 cursor-pointer',
           className,
         )}
         disabled={!ready || loading}
       >
         Clone a repo
-        <div className="flex items-center gap-1 ml-2">
-          <Github className="w-4 h-4" />
-          <GitBranch className="w-4 h-4" />
+        <div className="flex items-center gap-1.5 ml-2">
+          <Github className="w-4 h-4 text-cyan-200" />
+          <GitBranch className="w-4 h-4 text-purple-200" />
         </div>
       </Button>
 
       {/* Provider Selection Dialog */}
       {isDialogOpen && !selectedProvider && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-gray-950 rounded-xl shadow-xl border border-bolt-elements-borderColor dark:border-bolt-elements-borderColor max-w-md w-full">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-[#070712] rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.8),0_0_20px_rgba(168,85,247,0.1)] border border-purple-500/20 max-w-md w-full overflow-hidden">
             <div className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-bolt-elements-textPrimary dark:text-bolt-elements-textPrimary">
+              <div className="flex items-center justify-between mb-5">
+                <h3 className="text-lg font-bold text-zinc-100 tracking-tight">
                   Choose Repository Provider
                 </h3>
                 <button
                   onClick={() => setIsDialogOpen(false)}
-                  className="p-2 rounded-lg bg-transparent hover:bg-bolt-elements-background-depth-1 dark:hover:bg-bolt-elements-background-depth-1 text-bolt-elements-textSecondary dark:text-bolt-elements-textSecondary hover:text-bolt-elements-textPrimary dark:hover:text-bolt-elements-textPrimary transition-all duration-200 hover:scale-105 active:scale-95"
+                  className="p-2 rounded-lg bg-transparent hover:bg-purple-500/10 text-purple-300 hover:text-purple-200 transition-all duration-200 hover:scale-105 active:scale-95 cursor-pointer"
                 >
                   <X className="w-5 h-5 transition-transform duration-200 hover:rotate-90" />
                 </button>
@@ -208,17 +203,17 @@ ${escapeBoltTags(file.content)}
               <div className="space-y-3">
                 <button
                   onClick={() => setSelectedProvider('github')}
-                  className="w-full p-4 rounded-lg bg-bolt-elements-background-depth-1 dark:bg-bolt-elements-background-depth-1 hover:bg-bolt-elements-background-depth-2 dark:hover:bg-bolt-elements-background-depth-2 border border-bolt-elements-borderColor dark:border-bolt-elements-borderColor hover:border-bolt-elements-borderColorActive dark:hover:border-bolt-elements-borderColorActive transition-all duration-200 text-left group"
+                  className="w-full p-4 rounded-xl bg-zinc-950/40 hover:bg-purple-500/5 border border-purple-500/10 hover:border-purple-500/35 transition-all duration-200 text-left group cursor-pointer"
                 >
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-blue-500/10 dark:bg-blue-500/20 flex items-center justify-center group-hover:bg-blue-500/20 dark:group-hover:bg-blue-500/30 transition-colors">
-                      <Github className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+                  <div className="flex items-center gap-3.5">
+                    <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center group-hover:bg-blue-500/20 transition-colors">
+                      <Github className="w-5 h-5 text-blue-400" />
                     </div>
                     <div>
-                      <div className="font-medium text-bolt-elements-textPrimary dark:text-bolt-elements-textPrimary">
+                      <div className="font-semibold text-zinc-200">
                         GitHub
                       </div>
-                      <div className="text-sm text-bolt-elements-textSecondary dark:text-bolt-elements-textSecondary">
+                      <div className="text-xs text-zinc-400 mt-0.5">
                         Clone from GitHub repositories
                       </div>
                     </div>
@@ -227,17 +222,17 @@ ${escapeBoltTags(file.content)}
 
                 <button
                   onClick={() => setSelectedProvider('gitlab')}
-                  className="w-full p-4 rounded-lg bg-bolt-elements-background-depth-1 dark:bg-bolt-elements-background-depth-1 hover:bg-bolt-elements-background-depth-2 dark:hover:bg-bolt-elements-background-depth-2 border border-bolt-elements-borderColor dark:border-bolt-elements-borderColor hover:border-bolt-elements-borderColorActive dark:hover:border-bolt-elements-borderColorActive transition-all duration-200 text-left group"
+                  className="w-full p-4 rounded-xl bg-zinc-950/40 hover:bg-purple-500/5 border border-purple-500/10 hover:border-purple-500/35 transition-all duration-200 text-left group cursor-pointer"
                 >
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-orange-500/10 dark:bg-orange-500/20 flex items-center justify-center group-hover:bg-orange-500/20 dark:group-hover:bg-orange-500/30 transition-colors">
-                      <GitBranch className="w-6 h-6 text-orange-600 dark:text-orange-400" />
+                  <div className="flex items-center gap-3.5">
+                    <div className="w-10 h-10 rounded-xl bg-orange-500/10 flex items-center justify-center group-hover:bg-orange-500/20 transition-colors">
+                      <GitBranch className="w-5 h-5 text-orange-400" />
                     </div>
                     <div>
-                      <div className="font-medium text-bolt-elements-textPrimary dark:text-bolt-elements-textPrimary">
+                      <div className="font-semibold text-zinc-200">
                         GitLab
                       </div>
-                      <div className="text-sm text-bolt-elements-textSecondary dark:text-bolt-elements-textSecondary">
+                      <div className="text-xs text-zinc-400 mt-0.5">
                         Clone from GitLab repositories
                       </div>
                     </div>

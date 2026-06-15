@@ -66,28 +66,14 @@ export function ImportButtons(importChat: ((description: string, messages: Messa
             }}
             variant="default"
             size="lg"
-            className={classNames(
-              'gap-2 bg-bolt-elements-background-depth-1',
-              'text-bolt-elements-textPrimary',
-              'hover:bg-bolt-elements-background-depth-2',
-              'border border-bolt-elements-borderColor',
-              'h-10 px-4 py-2 min-w-[120px] justify-center',
-              'transition-all duration-200 ease-in-out',
-            )}
+            className="gap-2 bg-zinc-950/40 hover:bg-purple-500/5 text-purple-300 hover:text-purple-200 border border-purple-500/15 hover:border-purple-500/35 rounded-xl h-10 px-5 py-2 min-w-[130px] justify-center transition-all duration-200 cursor-pointer shadow-[0_0_10px_rgba(168,85,247,0.02)]"
           >
             <span className="i-ph:upload-simple w-4 h-4" />
             Import Chat
           </Button>
           <ImportFolderButton
             importChat={importChat}
-            className={classNames(
-              'gap-2 bg-bolt-elements-background-depth-1',
-              'text-bolt-elements-textPrimary',
-              'hover:bg-bolt-elements-background-depth-2',
-              'border border-[rgba(0,0,0,0.08)] dark:border-[rgba(255,255,255,0.08)]',
-              'h-10 px-4 py-2 min-w-[120px] justify-center',
-              'transition-all duration-200 ease-in-out rounded-lg',
-            )}
+            className="gap-2 bg-zinc-950/40 hover:bg-purple-500/5 text-purple-300 hover:text-purple-200 border border-purple-500/15 hover:border-purple-500/35 rounded-xl h-10 px-5 py-2 min-w-[130px] justify-center transition-all duration-200 cursor-pointer shadow-[0_0_10px_rgba(168,85,247,0.02)]"
           />
         </div>
       </div>

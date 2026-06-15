@@ -665,17 +665,24 @@ export const Preview = memo(({ setSelectedElement }: PreviewProps) => {
       {isPortDropdownOpen && (
         <div className="z-iframe-overlay w-full h-full absolute" onClick={() => setIsPortDropdownOpen(false)} />
       )}
-      <div className="bg-bolt-elements-background-depth-2 p-2 flex items-center gap-2">
+      <div className="bg-[#030307]/90 border-b border-purple-500/10 p-2.5 flex items-center gap-2.5 backdrop-blur-md">
         <div className="flex items-center gap-2">
-          <IconButton icon="i-ph:arrow-clockwise" onClick={reloadPreview} />
+          <IconButton
+            icon="i-ph:arrow-clockwise"
+            onClick={reloadPreview}
+            className="hover:bg-purple-500/10 hover:text-purple-300 transition-colors"
+          />
           <IconButton
             icon="i-ph:selection"
             onClick={() => setIsSelectionMode(!isSelectionMode)}
-            className={isSelectionMode ? 'bg-bolt-elements-background-depth-3' : ''}
+            className={classNames(
+              'hover:bg-purple-500/10 hover:text-purple-300 transition-colors',
+              isSelectionMode ? '!bg-purple-500/15 !text-purple-200 border border-purple-500/30' : ''
+            )}
           />
         </div>
 
-        <div className="flex-grow flex items-center gap-1 bg-bolt-elements-preview-addressBar-background border border-bolt-elements-borderColor text-bolt-elements-preview-addressBar-text rounded-full px-1 py-1 text-sm hover:bg-bolt-elements-preview-addressBar-backgroundHover hover:focus-within:bg-bolt-elements-preview-addressBar-backgroundActive focus-within:bg-bolt-elements-preview-addressBar-backgroundActive focus-within-border-bolt-elements-borderColorActive focus-within:text-bolt-elements-preview-addressBar-textActive">
+        <div className="flex-grow flex items-center gap-2 bg-zinc-950/60 dark:bg-black/60 border border-purple-500/25 text-purple-300 rounded-full px-3 py-1 text-xs hover:border-purple-500/40 focus-within:border-cyan-500/50 shadow-[inset_0_1px_4px_rgba(0,0,0,0.6)] transition-all duration-200">
           <PortDropdown
             activePreviewIndex={activePreviewIndex}
             setActivePreviewIndex={setActivePreviewIndex}
@@ -687,7 +694,7 @@ export const Preview = memo(({ setSelectedElement }: PreviewProps) => {
           <input
             title="URL Path"
             ref={inputRef}
-            className="w-full bg-transparent outline-none"
+            className="w-full bg-transparent outline-none text-zinc-100 font-mono text-[11px] placeholder-zinc-500"
             type="text"
             value={displayPath}
             onChange={(event) => {
@@ -718,10 +725,14 @@ export const Preview = memo(({ setSelectedElement }: PreviewProps) => {
           <IconButton
             icon="i-ph:devices"
             onClick={toggleDeviceMode}
+            className={classNames(
+              'hover:bg-purple-500/10 hover:text-purple-300 transition-colors',
+              isDeviceModeOn ? '!bg-purple-500/15 !text-purple-200 border border-purple-500/30' : ''
+            )}
             title={isDeviceModeOn ? 'Switch to Responsive Mode' : 'Switch to Device Mode'}
           />
 
-          {expoUrl && <IconButton icon="i-ph:qr-code" onClick={() => setIsExpoQrModalOpen(true)} title="Show QR" />}
+          {expoUrl && <IconButton icon="i-ph:qr-code" onClick={() => setIsExpoQrModalOpen(true)} title="Show QR" className="hover:bg-purple-500/10 hover:text-purple-300 transition-colors" />}
 
           <ExpoQrModal open={isExpoQrModalOpen} onClose={() => setIsExpoQrModalOpen(false)} />
 
@@ -730,11 +741,19 @@ export const Preview = memo(({ setSelectedElement }: PreviewProps) => {
               <IconButton
                 icon="i-ph:device-rotate"
                 onClick={() => setIsLandscape(!isLandscape)}
+                className={classNames(
+                  'hover:bg-purple-500/10 hover:text-purple-300 transition-colors',
+                  isLandscape ? '!bg-purple-500/15 !text-purple-200 border border-purple-500/30' : ''
+                )}
                 title={isLandscape ? 'Switch to Portrait' : 'Switch to Landscape'}
               />
               <IconButton
                 icon={showDeviceFrameInPreview ? 'i-ph:device-mobile' : 'i-ph:device-mobile-slash'}
                 onClick={() => setShowDeviceFrameInPreview(!showDeviceFrameInPreview)}
+                className={classNames(
+                  'hover:bg-purple-500/10 hover:text-purple-300 transition-colors',
+                  showDeviceFrameInPreview ? '!bg-purple-500/15 !text-purple-200 border border-purple-500/30' : ''
+                )}
                 title={showDeviceFrameInPreview ? 'Hide Device Frame' : 'Show Device Frame'}
               />
             </>
@@ -742,14 +761,16 @@ export const Preview = memo(({ setSelectedElement }: PreviewProps) => {
           <IconButton
             icon="i-ph:cursor-click"
             onClick={toggleInspectorMode}
-            className={
-              isInspectorMode ? 'bg-bolt-elements-background-depth-3 !text-bolt-elements-item-contentAccent' : ''
-            }
+            className={classNames(
+              'hover:bg-purple-500/10 hover:text-purple-300 transition-colors',
+              isInspectorMode ? '!bg-purple-500/15 !text-purple-200 border border-purple-500/30' : ''
+            )}
             title={isInspectorMode ? 'Disable Element Inspector' : 'Enable Element Inspector'}
           />
           <IconButton
             icon={isFullscreen ? 'i-ph:arrows-in' : 'i-ph:arrows-out'}
             onClick={toggleFullscreen}
+            className="hover:bg-purple-500/10 hover:text-purple-300 transition-colors"
             title={isFullscreen ? 'Exit Full Screen' : 'Full Screen'}
           />
 
