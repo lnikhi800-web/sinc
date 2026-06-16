@@ -1,7 +1,8 @@
 import type { AppLoadContext } from '@remix-run/node';
 import { RemixServer } from '@remix-run/react';
 import { isbot } from 'isbot';
-import { renderToPipeableStream } from 'react-dom/server';
+import { renderToPipeableStream, type PipeableStream } from 'react-dom/server';
+import { Writable } from 'stream';
 import { renderHeadToString } from 'remix-island';
 import { Head } from './root';
 import { themeStore } from '~/lib/stores/theme';
@@ -23,7 +24,7 @@ export default async function handleRequest(
     let statusCode = responseStatusCode;
     let resolved = false;
 
-    const { pipe, abort } = renderToPipeableStream(
+    const { pipe, abort }: PipeableStream = renderToPipeableStream(
       <RemixServer context={remixContext} url={request.url} abortDelay={ABORT_DELAY} />,
       {
         [isbot(userAgent ?? '') ? 'onAllReady' : 'onShellReady']() {
@@ -32,22 +33,18 @@ export default async function handleRequest(
           }
 
           resolved = true;
+
           responseHeaders.set('Content-Type', 'text/html');
           responseHeaders.set('Cross-Origin-Embedder-Policy', 'require-corp');
           responseHeaders.set('Cross-Origin-Opener-Policy', 'same-origin');
 
-          // Collect all chunks into a buffer then send as one response
-          const chunks: Uint8Array[] = [];
           const encoder = new TextEncoder();
-
-          chunks.push(
+          const chunks: Uint8Array[] = [
             encoder.encode(
               `<!DOCTYPE html><html lang="en" data-theme="${themeStore.value}"><head>${head}</head><body><div id="root" class="w-full h-full">`,
             ),
-          );
+          ];
 
-          // Use a writable that collects chunks
-          const { Writable } = require('stream');
           const writable = new Writable({
             write(chunk: Buffer, _encoding: string, callback: () => void) {
               chunks.push(new Uint8Array(chunk));
@@ -57,9 +54,17 @@ export default async function handleRequest(
               chunks.push(encoder.encode('</div></body></html>'));
               callback();
 
-              const body = new Blob(chunks).stream();
+              const totalLength = chunks.reduce((sum, c) => sum + c.length, 0);
+              const merged = new Uint8Array(totalLength);
+              let offset = 0;
+
+              for (const chunk of chunks) {
+                merged.set(chunk, offset);
+                offset += chunk.length;
+              }
+
               resolve(
-                new Response(body, {
+                new Response(merged, {
                   headers: responseHeaders,
                   status: didError ? 500 : statusCode,
                 }),
