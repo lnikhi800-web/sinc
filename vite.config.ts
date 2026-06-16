@@ -12,7 +12,23 @@ dotenv.config({ path: '.env.local' });
 dotenv.config({ path: '.env' });
 dotenv.config();
 
+function ssrFilterPlugin(plugin: any) {
+  return {
+    ...plugin,
+    config(config: any, env: any) {
+      const isSSR = !!(env.ssrBuild || config.build?.ssr);
+      console.log(`[ssrFilterPlugin] Config Hook: isSSR = ${isSSR}`);
+      if (isSSR) {
+        return {};
+      }
+      return plugin.config?.(config, env);
+    }
+  };
+}
+
 export default defineConfig((config) => {
+  console.log('Vite Config Env:', { ssrBuild: config.ssrBuild, command: config.command, mode: config.mode });
+  console.log('Process ARGV:', process.argv);
   return {
     define: {
       'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV),
@@ -26,7 +42,7 @@ export default defineConfig((config) => {
       },
     },
     plugins: [
-      !config.ssrBuild &&
+      ssrFilterPlugin(
         nodePolyfills({
           include: ['buffer', 'process', 'stream'],
           globals: {
@@ -36,7 +52,8 @@ export default defineConfig((config) => {
           },
           protocolImports: true,
           exclude: ['child_process', 'fs', 'path', 'util'],
-        }),
+        })
+      ),
       {
         name: 'buffer-polyfill',
         transform(code, id) {
