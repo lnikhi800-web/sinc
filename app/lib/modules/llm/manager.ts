@@ -201,6 +201,12 @@ export class LLMManager {
   }
 
   getDefaultProvider(): BaseProvider {
+    const nvidiaProvider = this._providers.get('Nvidia');
+
+    if (nvidiaProvider) {
+      return nvidiaProvider;
+    }
+
     const firstProvider = this._providers.values().next().value;
 
     if (!firstProvider) {
