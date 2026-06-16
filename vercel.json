@@ -1,11 +1,5 @@
 {
   "buildCommand": "pnpm run build",
   "installCommand": "pnpm install",
-  "framework": "remix",
-  "outputDirectory": "build/client",
-  "functions": {
-    "build/server/index.js": {
-      "runtime": "nodejs20.x"
-    }
-  }
+  "framework": "remix"
 }
