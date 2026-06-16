@@ -26,16 +26,17 @@ export default defineConfig((config) => {
       },
     },
     plugins: [
-      nodePolyfills({
-        include: ['buffer', 'process', 'stream'],
-        globals: {
-          Buffer: true,
-          process: true,
-          global: true,
-        },
-        protocolImports: true,
-        exclude: ['child_process', 'fs', 'path', 'util'],
-      }),
+      !config.ssrBuild &&
+        nodePolyfills({
+          include: ['buffer', 'process', 'stream'],
+          globals: {
+            Buffer: true,
+            process: true,
+            global: true,
+          },
+          protocolImports: true,
+          exclude: ['child_process', 'fs', 'path', 'util'],
+        }),
       {
         name: 'buffer-polyfill',
         transform(code, id) {
@@ -63,7 +64,7 @@ export default defineConfig((config) => {
       tsconfigPaths(),
       chrome129IssuePlugin(),
       config.mode === 'production' && optimizeCssModules({ apply: 'build' }),
-    ],
+    ].filter(Boolean),
     envPrefix: [
       'VITE_',
       'OPENAI_LIKE_API_BASE_URL',
