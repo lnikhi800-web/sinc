@@ -30,7 +30,7 @@ export const loader: LoaderFunction = async ({ context, request }) => {
    * 3. Process environment variables (from .env.local)
    * 4. LLMManager environment variables
    */
-  const isSet = !!(
+  const isSet = provider === 'Nvidia' || !!(
     apiKeys?.[provider] ||
     (context?.cloudflare?.env as Record<string, any>)?.[envVarName] ||
     process.env[envVarName] ||
