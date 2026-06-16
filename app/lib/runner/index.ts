@@ -14,7 +14,7 @@ const getBackendUrl = (): string => {
   }
 
   // Production fallback
-  return 'wss://sinc-backend-runner.up.railway.app';
+  return 'wss://sinc-production-21a2.up.railway.app';
 };
 
 // Dynamically resolve projectId from Chat ID in the URL, fallback to sessionStorage UUID
