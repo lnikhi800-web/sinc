@@ -339,7 +339,7 @@ export const Menu = () => {
       >
         <div className="h-12 flex items-center justify-between px-4 border-b border-gray-100 dark:border-gray-800/50 bg-gray-50 dark:bg-gray-900 rounded-tr-2xl">
           <div className="text-gray-900 dark:text-white font-medium flex items-center gap-2">
-            <img src="/sinc-logo.png" alt="SINC" className="w-6 h-6 rounded-md border border-gray-200 dark:border-gray-800" />
+            <img src="/sinc-logo.jpg" alt="SINC" className="w-6 h-6 rounded-md border border-gray-200 dark:border-gray-800" />
             <span className="font-bold text-sm tracking-wider text-bolt-elements-textPrimary" style={{ fontFamily: 'Orbitron, sans-serif' }}>
               SINC
             </span>

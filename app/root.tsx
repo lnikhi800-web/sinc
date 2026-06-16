@@ -25,8 +25,8 @@ const toastAnimation = cssTransition({
 export const links: LinksFunction = () => [
   {
     rel: 'icon',
-    href: '/favicon.svg',
-    type: 'image/svg+xml',
+    href: '/sinc-logo.jpg',
+    type: 'image/jpeg',
   },
   { rel: 'stylesheet', href: reactToastifyStyles },
   { rel: 'stylesheet', href: tailwindReset },

@@ -38,7 +38,7 @@ export const STARTER_TEMPLATES: Template[] = [
     description: 'Vite starter fullstack template integrated with shadcn/ui components and styling system',
     githubRepo: 'xKevIsDev/vite-shadcn',
     tags: ['vite', 'react', 'typescript', 'shadcn', 'tailwind'],
-    icon: 'i-bolt:shadcn',
+    icon: 'i-ph:layout',
   },
   {
     name: 'Vite React',
@@ -46,7 +46,7 @@ export const STARTER_TEMPLATES: Template[] = [
     description: 'React starter template powered by Vite for fast development experience',
     githubRepo: 'xKevIsDev/bolt-vite-react-ts-template',
     tags: ['react', 'vite', 'frontend', 'website', 'app'],
-    icon: 'i-bolt:react',
+    icon: 'i-ph:atom',
   },
   {
     name: 'Vite Typescript',
@@ -54,7 +54,7 @@ export const STARTER_TEMPLATES: Template[] = [
     description: 'Vite starter template with TypeScript configuration for type-safe development',
     githubRepo: 'xKevIsDev/bolt-vite-ts-template',
     tags: ['vite', 'typescript', 'minimal'],
-    icon: 'i-bolt:typescript',
+    icon: 'i-ph:code',
   },
   {
     name: 'Vanilla Vite',
@@ -62,6 +62,6 @@ export const STARTER_TEMPLATES: Template[] = [
     description: 'Minimal Vite starter template for vanilla JavaScript projects',
     githubRepo: 'xKevIsDev/vanilla-vite-template',
     tags: ['vite', 'vanilla-js', 'minimal'],
-    icon: 'i-bolt:vite',
+    icon: 'i-ph:lightning',
   },
 ];

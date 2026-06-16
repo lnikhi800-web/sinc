@@ -20,7 +20,7 @@ export const ExpoQrModal: React.FC<ExpoQrModalProps> = ({ open, onClose }) => {
         onClose={onClose}
       >
         <div className="border !border-bolt-elements-borderColor flex flex-col gap-5 justify-center items-center p-6 bg-bolt-elements-background-depth-2 rounded-md">
-          <div className="i-bolt:expo-brand h-10 w-full invert dark:invert-none"></div>
+          <div className="i-ph:qr-code h-10 w-10 text-bolt-elements-textPrimary"></div>
           <DialogTitle className="text-bolt-elements-textTertiary text-lg font-semibold leading-6">
             Preview on your own mobile device
           </DialogTitle>
@@ -30,7 +30,7 @@ export const ExpoQrModal: React.FC<ExpoQrModalProps> = ({ open, onClose }) => {
           <div className="my-6 flex flex-col items-center">
             {expoUrl ? (
               <QRCode
-                logoImage="/favicon.svg"
+                logoImage="/sinc-logo.jpg"
                 removeQrCodeBehindLogo={true}
                 logoPadding={3}
                 logoHeight={50}

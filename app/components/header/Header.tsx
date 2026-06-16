@@ -18,7 +18,7 @@ export function Header() {
       <div className="flex items-center gap-2 z-logo text-bolt-elements-textPrimary cursor-pointer">
         <div className="i-ph:sidebar-simple-duotone text-xl" />
         <a href="/" className="flex items-center gap-2.5">
-          <img src="/sinc-logo.png" alt="SINC" className="w-8 h-8 rounded-lg border border-gray-200 dark:border-gray-800 shadow-sm" />
+          <img src="/sinc-logo.jpg" alt="SINC" className="w-8 h-8 rounded-lg border border-gray-200 dark:border-gray-800 shadow-sm" />
           <span className="font-bold text-xl tracking-widest text-bolt-elements-textPrimary" style={{ fontFamily: 'Orbitron, sans-serif' }}>
             SINC
           </span>
