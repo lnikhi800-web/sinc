@@ -22,13 +22,11 @@ const toastAnimation = cssTransition({
   exit: 'animated fadeOutRight',
 });
 
-
-
 export const links: LinksFunction = () => [
   {
     rel: 'icon',
-    href: '/sinc-logo.png',
-    type: 'image/png',
+    href: '/favicon.svg',
+    type: 'image/svg+xml',
   },
   { rel: 'stylesheet', href: reactToastifyStyles },
   { rel: 'stylesheet', href: tailwindReset },
@@ -45,7 +43,7 @@ export const links: LinksFunction = () => [
   },
   {
     rel: 'stylesheet',
-    href: 'https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap',
+    href: 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Orbitron:wght@700&display=swap',
   },
 ];
 
@@ -53,7 +51,7 @@ const inlineThemeCode = stripIndents`
   setTutorialKitTheme();
 
   function setTutorialKitTheme() {
-    let theme = localStorage.getItem('sinc_theme');
+    let theme = localStorage.getItem('bolt_theme');
 
     if (!theme) {
       theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
@@ -67,8 +65,6 @@ export const Head = createHead(() => (
   <>
     <meta charSet="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>SINC — AI App Builder</title>
-    <meta name="description" content="SINC — Synchronized Intelligence and Coding. Build full-stack React apps with AI in seconds." />
     <Meta />
     <Links />
     <script dangerouslySetInnerHTML={{ __html: inlineThemeCode }} />

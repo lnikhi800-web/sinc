@@ -145,28 +145,21 @@ export const AssistantMessage = memo(
                 <div className="context"></div>
               </Popover>
             )}
-            <div className="flex w-full items-center justify-between mt-1 mb-2">
+            <div className="flex w-full items-center justify-between">
               {usage && (
-                <div className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-mono bg-purple-500/5 dark:bg-purple-950/30 border border-purple-500/15 text-purple-300/90 shadow-[0_0_10px_rgba(168,85,247,0.05)]">
-                  <span className="w-1.5 h-1.5 rounded-full bg-purple-400 animate-pulse" />
-                  <span className="font-semibold text-purple-200">{usage.totalTokens}</span> tokens
-                  <span className="text-purple-400/40">|</span>
-                  <span>in: {usage.promptTokens}</span>
-                  <span className="text-purple-400/40">|</span>
-                  <span>out: {usage.completionTokens}</span>
+                <div>
+                  Tokens: {usage.totalTokens} (prompt: {usage.promptTokens}, completion: {usage.completionTokens})
                 </div>
               )}
               {(onRewind || onFork) && messageId && (
-                <div className="flex gap-2 ml-auto items-center">
+                <div className="flex gap-2 flex-col lg:flex-row ml-auto">
                   {onRewind && (
                     <WithTooltip tooltip="Revert to this message">
                       <button
                         onClick={() => onRewind(messageId)}
                         key="i-ph:arrow-u-up-left"
-                        className="p-1.5 rounded-lg border border-purple-500/10 hover:border-purple-500/30 bg-purple-500/5 hover:bg-purple-500/15 text-purple-300/80 hover:text-purple-200 transition-all shadow-[0_0_8px_rgba(168,85,247,0.02)] flex items-center justify-center cursor-pointer"
-                      >
-                        <div className="i-ph:arrow-u-up-left text-base" />
-                      </button>
+                        className="i-ph:arrow-u-up-left text-xl text-bolt-elements-textSecondary hover:text-bolt-elements-textPrimary transition-colors"
+                      />
                     </WithTooltip>
                   )}
                   {onFork && (
@@ -174,10 +167,8 @@ export const AssistantMessage = memo(
                       <button
                         onClick={() => onFork(messageId)}
                         key="i-ph:git-fork"
-                        className="p-1.5 rounded-lg border border-purple-500/10 hover:border-purple-500/30 bg-purple-500/5 hover:bg-purple-500/15 text-purple-300/80 hover:text-purple-200 transition-all shadow-[0_0_8px_rgba(168,85,247,0.02)] flex items-center justify-center cursor-pointer"
-                      >
-                        <div className="i-ph:git-fork text-base" />
-                      </button>
+                        className="i-ph:git-fork text-xl text-bolt-elements-textSecondary hover:text-bolt-elements-textPrimary transition-colors"
+                      />
                     </WithTooltip>
                   )}
                 </div>

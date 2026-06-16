@@ -4,9 +4,9 @@ import { classNames } from '~/utils/classNames';
 
 export const ExportChatButton = ({ exportChat }: { exportChat?: () => void }) => {
   return (
-    <div className="flex border border-purple-500/20 rounded-md overflow-hidden">
+    <div className="flex border border-bolt-elements-borderColor rounded-md overflow-hidden">
       <DropdownMenu.Root>
-        <DropdownMenu.Trigger className="rounded-md items-center justify-center [&:is(:disabled,.disabled)]:cursor-not-allowed [&:is(:disabled,.disabled)]:opacity-60 px-3 py-1.5 text-xs bg-gradient-to-r from-purple-600 to-cyan-600 text-white hover:text-cyan-100 hover:from-purple-500 hover:to-cyan-500 outline-none flex gap-1.7 border border-purple-500/30 shadow-[0_0_10px_rgba(168,85,247,0.15)]">
+        <DropdownMenu.Trigger className="rounded-md items-center justify-center [&:is(:disabled,.disabled)]:cursor-not-allowed [&:is(:disabled,.disabled)]:opacity-60 px-3 py-1.5 text-xs bg-accent-500 text-white hover:text-bolt-elements-item-contentAccent [&:not(:disabled,.disabled)]:hover:bg-bolt-elements-button-primary-backgroundHover outline-accent-500 flex gap-1.7">
           Export
           <span className={classNames('i-ph:caret-down transition-transform')} />
         </DropdownMenu.Trigger>

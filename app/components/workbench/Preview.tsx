@@ -6,7 +6,6 @@ import { PortDropdown } from './PortDropdown';
 import { ScreenshotSelector } from './ScreenshotSelector';
 import { expoUrlAtom } from '~/lib/stores/qrCodeStore';
 import { ExpoQrModal } from '~/components/workbench/ExpoQrModal';
-import { classNames } from '~/utils/classNames';
 import type { ElementInfo } from './Inspector';
 
 type ResizeSide = 'left' | 'right' | null;
@@ -378,15 +377,12 @@ export const Preview = memo(({ setSelectedElement }: PreviewProps) => {
 
   const openInNewWindow = (size: WindowSize) => {
     if (activePreview?.baseUrl) {
-      const match = activePreview.baseUrl.match(/^https?:\/\/([^.]+)\.local-credentialless\.webcontainer-api\.io/);
+      const previewUrl = activePreview.baseUrl;
+      const previewId = previewUrl.replace(/[^a-z0-9]/gi, '-').slice(-20) || 'preview';
 
-      if (match) {
-        const previewId = match[1];
-        const previewUrl = `/webcontainer/preview/${previewId}`;
-
-        // Adjust dimensions for landscape mode if applicable
-        let width = size.width;
-        let height = size.height;
+      // Adjust dimensions for landscape mode if applicable
+      let width = size.width;
+      let height = size.height;
 
         if (isLandscape && (size.frameType === 'mobile' || size.frameType === 'tablet')) {
           // Swap width and height for landscape mode
@@ -544,11 +540,8 @@ export const Preview = memo(({ setSelectedElement }: PreviewProps) => {
             newWindow.focus();
           }
         }
-      } else {
-        console.warn('[Preview] Invalid WebContainer URL:', activePreview.baseUrl);
       }
-    }
-  };
+    };
 
   const openInNewTab = () => {
     if (activePreview?.baseUrl) {
@@ -666,24 +659,17 @@ export const Preview = memo(({ setSelectedElement }: PreviewProps) => {
       {isPortDropdownOpen && (
         <div className="z-iframe-overlay w-full h-full absolute" onClick={() => setIsPortDropdownOpen(false)} />
       )}
-      <div className="bg-[#030307]/90 border-b border-purple-500/10 p-2.5 flex items-center gap-2.5 backdrop-blur-md">
+      <div className="bg-bolt-elements-background-depth-2 p-2 flex items-center gap-2">
         <div className="flex items-center gap-2">
-          <IconButton
-            icon="i-ph:arrow-clockwise"
-            onClick={reloadPreview}
-            className="hover:bg-purple-500/10 hover:text-purple-300 transition-colors"
-          />
+          <IconButton icon="i-ph:arrow-clockwise" onClick={reloadPreview} />
           <IconButton
             icon="i-ph:selection"
             onClick={() => setIsSelectionMode(!isSelectionMode)}
-            className={classNames(
-              'hover:bg-purple-500/10 hover:text-purple-300 transition-colors',
-              isSelectionMode ? '!bg-purple-500/15 !text-purple-200 border border-purple-500/30' : ''
-            )}
+            className={isSelectionMode ? 'bg-bolt-elements-background-depth-3' : ''}
           />
         </div>
 
-        <div className="flex-grow flex items-center gap-2 bg-zinc-950/60 dark:bg-black/60 border border-purple-500/25 text-purple-300 rounded-full px-3 py-1 text-xs hover:border-purple-500/40 focus-within:border-cyan-500/50 shadow-[inset_0_1px_4px_rgba(0,0,0,0.6)] transition-all duration-200">
+        <div className="flex-grow flex items-center gap-1 bg-bolt-elements-preview-addressBar-background border border-bolt-elements-borderColor text-bolt-elements-preview-addressBar-text rounded-full px-1 py-1 text-sm hover:bg-bolt-elements-preview-addressBar-backgroundHover hover:focus-within:bg-bolt-elements-preview-addressBar-backgroundActive focus-within:bg-bolt-elements-preview-addressBar-backgroundActive focus-within-border-bolt-elements-borderColorActive focus-within:text-bolt-elements-preview-addressBar-textActive">
           <PortDropdown
             activePreviewIndex={activePreviewIndex}
             setActivePreviewIndex={setActivePreviewIndex}
@@ -695,7 +681,7 @@ export const Preview = memo(({ setSelectedElement }: PreviewProps) => {
           <input
             title="URL Path"
             ref={inputRef}
-            className="w-full bg-transparent outline-none text-zinc-100 font-mono text-[11px] placeholder-zinc-500"
+            className="w-full bg-transparent outline-none"
             type="text"
             value={displayPath}
             onChange={(event) => {
@@ -726,14 +712,10 @@ export const Preview = memo(({ setSelectedElement }: PreviewProps) => {
           <IconButton
             icon="i-ph:devices"
             onClick={toggleDeviceMode}
-            className={classNames(
-              'hover:bg-purple-500/10 hover:text-purple-300 transition-colors',
-              isDeviceModeOn ? '!bg-purple-500/15 !text-purple-200 border border-purple-500/30' : ''
-            )}
             title={isDeviceModeOn ? 'Switch to Responsive Mode' : 'Switch to Device Mode'}
           />
 
-          {expoUrl && <IconButton icon="i-ph:qr-code" onClick={() => setIsExpoQrModalOpen(true)} title="Show QR" className="hover:bg-purple-500/10 hover:text-purple-300 transition-colors" />}
+          {expoUrl && <IconButton icon="i-ph:qr-code" onClick={() => setIsExpoQrModalOpen(true)} title="Show QR" />}
 
           <ExpoQrModal open={isExpoQrModalOpen} onClose={() => setIsExpoQrModalOpen(false)} />
 
@@ -742,19 +724,11 @@ export const Preview = memo(({ setSelectedElement }: PreviewProps) => {
               <IconButton
                 icon="i-ph:device-rotate"
                 onClick={() => setIsLandscape(!isLandscape)}
-                className={classNames(
-                  'hover:bg-purple-500/10 hover:text-purple-300 transition-colors',
-                  isLandscape ? '!bg-purple-500/15 !text-purple-200 border border-purple-500/30' : ''
-                )}
                 title={isLandscape ? 'Switch to Portrait' : 'Switch to Landscape'}
               />
               <IconButton
                 icon={showDeviceFrameInPreview ? 'i-ph:device-mobile' : 'i-ph:device-mobile-slash'}
                 onClick={() => setShowDeviceFrameInPreview(!showDeviceFrameInPreview)}
-                className={classNames(
-                  'hover:bg-purple-500/10 hover:text-purple-300 transition-colors',
-                  showDeviceFrameInPreview ? '!bg-purple-500/15 !text-purple-200 border border-purple-500/30' : ''
-                )}
                 title={showDeviceFrameInPreview ? 'Hide Device Frame' : 'Show Device Frame'}
               />
             </>
@@ -762,16 +736,14 @@ export const Preview = memo(({ setSelectedElement }: PreviewProps) => {
           <IconButton
             icon="i-ph:cursor-click"
             onClick={toggleInspectorMode}
-            className={classNames(
-              'hover:bg-purple-500/10 hover:text-purple-300 transition-colors',
-              isInspectorMode ? '!bg-purple-500/15 !text-purple-200 border border-purple-500/30' : ''
-            )}
+            className={
+              isInspectorMode ? 'bg-bolt-elements-background-depth-3 !text-bolt-elements-item-contentAccent' : ''
+            }
             title={isInspectorMode ? 'Disable Element Inspector' : 'Enable Element Inspector'}
           />
           <IconButton
             icon={isFullscreen ? 'i-ph:arrows-in' : 'i-ph:arrows-out'}
             onClick={toggleFullscreen}
-            className="hover:bg-purple-500/10 hover:text-purple-300 transition-colors"
             title={isFullscreen ? 'Exit Full Screen' : 'Full Screen'}
           />
 
@@ -808,17 +780,8 @@ export const Preview = memo(({ setSelectedElement }: PreviewProps) => {
                             return;
                           }
 
-                          const match = activePreview.baseUrl.match(
-                            /^https?:\/\/([^.]+)\.local-credentialless\.webcontainer-api\.io/,
-                          );
-
-                          if (!match) {
-                            console.warn('[Preview] Invalid WebContainer URL:', activePreview.baseUrl);
-                            return;
-                          }
-
-                          const previewId = match[1];
-                          const previewUrl = `/webcontainer/preview/${previewId}`;
+                          const previewUrl = activePreview.baseUrl;
+                          const previewId = previewUrl.replace(/[^a-z0-9]/gi, '-').slice(-20) || 'preview';
 
                           // Open in a new window with simple parameters
                           window.open(

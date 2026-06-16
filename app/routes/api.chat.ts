@@ -13,7 +13,6 @@ import { createSummary } from '~/lib/.server/llm/create-summary';
 import { extractPropertiesFromMessage } from '~/lib/.server/llm/utils';
 import type { DesignScheme } from '~/types/design-scheme';
 import { MCPService } from '~/lib/services/mcpService';
-import { getUserFromRequest, getProfile, getSupabaseAdmin } from '~/lib/auth.server';
 import { StreamRecoveryManager } from '~/lib/.server/llm/stream-recovery';
 
 export async function action(args: ActionFunctionArgs) {
@@ -41,43 +40,6 @@ function parseCookies(cookieHeader: string): Record<string, string> {
 }
 
 async function chatAction({ context, request }: ActionFunctionArgs) {
-  // =========================================================
-  // SINC: Auth + Quota Check
-  // =========================================================
-  try {
-    const user = await getUserFromRequest(request.clone());
-
-    if (user) {
-      const profile = await getProfile(user.id);
-
-      if (profile && profile.prompt_count >= profile.prompt_limit) {
-        return new Response(
-          JSON.stringify({
-            error: 'Prompt limit reached',
-            code: 'QUOTA_EXCEEDED',
-            plan: profile.plan,
-            upgradeUrl: '/pricing',
-            message: `You've used all ${profile.prompt_limit} prompts on the ${profile.plan} plan. Upgrade to continue building!`,
-          }),
-          {
-            status: 402,
-            headers: { 'Content-Type': 'application/json' },
-          },
-        );
-      }
-
-      // Increment prompt count after check passes
-      if (profile) {
-        const supabaseAdmin = getSupabaseAdmin();
-        await supabaseAdmin.rpc('increment_prompt_count', { user_id: user.id });
-      }
-    }
-  } catch (quotaErr) {
-    // Non-blocking — if quota check fails, allow the request (fail open)
-    logger.warn('SINC quota check failed (fail open):', quotaErr);
-  }
-  // =========================================================
-
   const streamRecovery = new StreamRecoveryManager({
     timeout: 45000,
     maxRetries: 2,
@@ -116,7 +78,6 @@ async function chatAction({ context, request }: ActionFunctionArgs) {
   const cumulativeUsage = {
     completionTokens: 0,
     promptTokens: 0,
-
     totalTokens: 0,
   };
   const encoder: TextEncoder = new TextEncoder();

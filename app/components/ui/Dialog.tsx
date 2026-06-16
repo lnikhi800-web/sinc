@@ -51,10 +51,11 @@ export const DialogTitle = memo(({ className, children, ...props }: RadixDialog.
 export const DialogDescription = memo(({ className, children, ...props }: RadixDialog.DialogDescriptionProps) => {
   return (
     <RadixDialog.Description
+      asChild
       className={classNames('text-sm text-bolt-elements-textSecondary mt-1', className)}
       {...props}
     >
-      {children}
+      <div>{children}</div>
     </RadixDialog.Description>
   );
 });

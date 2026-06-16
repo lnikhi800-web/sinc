@@ -1,4 +1,4 @@
-import type { WebContainer } from '@webcontainer/api';
+import type { WorkspaceRunner } from '~/lib/runner';
 import { path as nodePath } from '~/utils/path';
 import { atom, map, type MapStore } from 'nanostores';
 import type { ActionAlert, BoltAction, DeployAlert, FileHistory, SupabaseAction, SupabaseAlert } from '~/types/actions';
@@ -6,6 +6,81 @@ import { createScopedLogger } from '~/utils/logger';
 import { unreachable } from '~/utils/unreachable';
 import type { ActionCallbackData } from './message-parser';
 import type { BoltShell } from '~/utils/shell';
+
+/**
+ * Code file extensions that require newline-safe sanitization.
+ * Binary files and data files are intentionally excluded.
+ */
+const CODE_FILE_EXTENSIONS = new Set([
+  '.js', '.mjs', '.cjs', '.jsx',
+  '.ts', '.mts', '.cts', '.tsx',
+  '.vue', '.svelte', '.astro',
+  '.css', '.scss', '.sass', '.less',
+  '.html', '.htm', '.xml', '.svg',
+  '.py', '.rb', '.php', '.java', '.go', '.rs', '.c', '.cpp', '.h',
+  '.sh', '.bash', '.zsh',
+]);
+
+/**
+ * Keywords that open a new JS/TS statement at the top level.
+ * Used to detect single-line-collapsed content from LLM output.
+ */
+const JS_STATEMENT_OPENERS =
+  /(?<=[^\S\n])(import\s|export\s|export\{|const\s|let\s|var\s|function\s|function\*\s|async\s+function|class\s|interface\s|type\s|enum\s|declare\s|abstract\s|@\w)/g;
+
+/**
+ * Sanitizes AI-generated file content before writing to disk.
+ *
+ * Problem: LLMs occasionally collapse multiple JS/TS statements onto a single
+ * line (e.g. `import './a' import './b'`). esbuild / Node require each
+ * statement to start on its own line.
+ *
+ * Strategy: For code files, if the content has very few real newlines relative
+ * to its length AND it contains collapsed statement boundaries, we reconstruct
+ * proper newlines at each statement opener.
+ *
+ * This function is intentionally idempotent — already-correct multiline content
+ * passes through unchanged.
+ */
+function sanitizeFileContent(filePath: string, content: string): string {
+  const ext = nodePath.extname(filePath).toLowerCase();
+
+  if (!CODE_FILE_EXTENSIONS.has(ext)) {
+    return content; // Leave binary / data files untouched
+  }
+
+  // Count actual newlines vs content length as a heuristic
+  const newlineCount = (content.match(/\n/g) || []).length;
+  const lineRatio = newlineCount / Math.max(content.length, 1);
+
+  // Only intervene if the file looks suspiciously flat (< 1 newline per 80 chars)
+  // and the content is non-trivial
+  if (content.length < 20 || lineRatio > 0.012) {
+    return content;
+  }
+
+  // Only applies to JS/TS-family files where statement boundaries matter
+  const jsFamily = new Set(['.js', '.mjs', '.cjs', '.jsx', '.ts', '.mts', '.cts', '.tsx', '.vue', '.svelte', '.astro']);
+
+  if (!jsFamily.has(ext)) {
+    return content;
+  }
+
+  // Re-insert newlines before each statement-opening keyword that follows
+  // a non-newline whitespace character (i.e. collapsed onto the same line)
+  let fixed = content.replace(JS_STATEMENT_OPENERS, (match) => `\n${match.trimStart()}`);
+
+  // General heuristic: split statements when a quote, bracket, parenthesis, or brace
+  // is followed directly by an identifier start on the same line
+  const collapsedStatementRegex = /(?<=['"`)}\]]\s+)(?=[a-zA-Z_$][\w_$]*)/g;
+  fixed = fixed.replace(collapsedStatementRegex, '\n');
+
+  if (fixed !== content) {
+    logger.debug(`[sanitizeFileContent] Reconstructed newlines in ${filePath} (was ${newlineCount} lines, ratio ${lineRatio.toFixed(4)})`);
+  }
+
+  return fixed;
+}
 
 const logger = createScopedLogger('ActionRunner');
 
@@ -64,7 +139,7 @@ class ActionCommandError extends Error {
 }
 
 export class ActionRunner {
-  #webcontainer: Promise<WebContainer>;
+  #runner: Promise<WorkspaceRunner>;
   #currentExecutionPromise: Promise<void> = Promise.resolve();
   #shellTerminal: () => BoltShell;
   runnerId = atom<string>(`${Date.now()}`);
@@ -75,13 +150,13 @@ export class ActionRunner {
   buildOutput?: { path: string; exitCode: number; output: string };
 
   constructor(
-    webcontainerPromise: Promise<WebContainer>,
+    runnerPromise: Promise<WorkspaceRunner>,
     getShellTerminal: () => BoltShell,
     onAlert?: (alert: ActionAlert) => void,
     onSupabaseAlert?: (alert: SupabaseAlert) => void,
     onDeployAlert?: (alert: DeployAlert) => void,
   ) {
-    this.#webcontainer = webcontainerPromise;
+    this.#runner = runnerPromise;
     this.#shellTerminal = getShellTerminal;
     this.onAlert = onAlert;
     this.onSupabaseAlert = onSupabaseAlert;
@@ -156,7 +231,7 @@ export class ActionRunner {
     try {
       switch (action.type) {
         case 'shell': {
-          await this.#runShellAction(action);
+          await this.#runShellAction(actionId, action);
           break;
         }
         case 'file': {
@@ -247,7 +322,7 @@ export class ActionRunner {
     }
   }
 
-  async #runShellAction(action: ActionState) {
+  async #runShellAction(actionId: string, action: ActionState) {
     if (action.type !== 'shell') {
       unreachable('Expected shell action');
     }
@@ -257,6 +332,54 @@ export class ActionRunner {
 
     if (!shell || !shell.terminal || !shell.process) {
       unreachable('Shell terminal not found');
+    }
+
+    const trimmedCommand = action.content.trim();
+    
+    // Check if the command contains a dev server/start command
+    const DEV_SERVER_CMD_REGEX = /\b(npm|yarn|pnpm|npx)\s+(run\s+)?(dev|start)\b|\b(vite|expo\s+start)\b/i;
+    
+    if (DEV_SERVER_CMD_REGEX.test(trimmedCommand)) {
+      // Split chained commands by '&&'
+      const parts = trimmedCommand.split('&&').map(p => p.trim());
+      const installParts = parts.filter(p => !DEV_SERVER_CMD_REGEX.test(p));
+      const startParts = parts.filter(p => DEV_SERVER_CMD_REGEX.test(p));
+
+      // 1. Run all setup/install parts synchronously
+      for (const part of installParts) {
+        if (part) {
+          const resp = await shell.executeCommand(this.runnerId.get(), part, () => {
+            action.abort();
+          });
+          if (resp?.exitCode != 0) {
+            const enhancedError = this.#createEnhancedShellError(part, resp?.exitCode, resp?.output);
+            throw new ActionCommandError(enhancedError.title, enhancedError.details);
+          }
+        }
+      }
+
+      // 2. Run the dev server part asynchronously (non-blocking, like 'start' action)
+      if (startParts.length > 0) {
+        const startCommand = startParts.join(' && ');
+        const dummyAction = { ...action, content: startCommand, type: 'start' } as any;
+        
+        this.#runStartAction(dummyAction)
+          .then(() => {
+            // Once the start action has initiated successfully, resolve this shell action as complete
+            this.#updateAction(actionId, { status: 'complete' });
+          })
+          .catch((err: Error) => {
+            if (action.abortSignal.aborted) {
+              return;
+            }
+            this.#updateAction(actionId, { status: 'failed', error: 'Action failed' });
+            logger.error(`[shell-dev-start]:Action failed\n\n`, err);
+          });
+        
+        // Wait a brief delay to ensure HMR is initiated, then resolve
+        await new Promise((resolve) => setTimeout(resolve, 2000));
+        return;
+      }
     }
 
     // Pre-validate command for common issues
@@ -313,7 +436,7 @@ export class ActionRunner {
       unreachable('Expected file action');
     }
 
-    const webcontainer = await this.#webcontainer;
+    const webcontainer = await this.#runner;
     const relativePath = nodePath.relative(webcontainer.workdir, action.filePath);
 
     let folder = nodePath.dirname(relativePath);
@@ -331,7 +454,9 @@ export class ActionRunner {
     }
 
     try {
-      await webcontainer.fs.writeFile(relativePath, action.content);
+      // Sanitize content before writing — guards against LLM-collapsed single-line output
+      const safeContent = sanitizeFileContent(action.filePath, action.content);
+      await webcontainer.fs.writeFile(relativePath, safeContent);
       logger.debug(`File written ${relativePath}`);
     } catch (error) {
       logger.error('Failed to write file\n\n', error);
@@ -346,7 +471,7 @@ export class ActionRunner {
 
   async getFileHistory(filePath: string): Promise<FileHistory | null> {
     try {
-      const webcontainer = await this.#webcontainer;
+      const webcontainer = await this.#runner;
       const historyPath = this.#getHistoryPath(filePath);
       const content = await webcontainer.fs.readFile(historyPath, 'utf-8');
 
@@ -358,7 +483,7 @@ export class ActionRunner {
   }
 
   async saveFileHistory(filePath: string, history: FileHistory) {
-    // const webcontainer = await this.#webcontainer;
+    // const webcontainer = await this.#runner;
     const historyPath = this.#getHistoryPath(filePath);
 
     await this.#runFileAction({
@@ -389,7 +514,7 @@ export class ActionRunner {
       source: 'netlify',
     });
 
-    const webcontainer = await this.#webcontainer;
+    const webcontainer = await this.#runner;
 
     // Create a new terminal specifically for the build
     const buildProcess = await webcontainer.spawn('npm', ['run', 'build']);
@@ -590,7 +715,7 @@ export class ActionRunner {
 
         // Check if any of the files exist using WebContainer
         try {
-          const webcontainer = await this.#webcontainer;
+          const webcontainer = await this.#runner;
           const existingFiles = [];
 
           for (const filePath of filePaths) {
@@ -635,7 +760,7 @@ export class ActionRunner {
         const targetDir = cdMatch[1].trim();
 
         try {
-          const webcontainer = await this.#webcontainer;
+          const webcontainer = await this.#runner;
           await webcontainer.fs.readdir(targetDir);
         } catch {
           return {
@@ -655,7 +780,7 @@ export class ActionRunner {
         const sourceFile = parts[1];
 
         try {
-          const webcontainer = await this.#webcontainer;
+          const webcontainer = await this.#runner;
           await webcontainer.fs.readFile(sourceFile);
         } catch {
           return {
@@ -716,7 +841,7 @@ export class ActionRunner {
         pattern: /command not found/,
         title: 'Command Not Found',
         getMessage: () =>
-          `The command '${firstWord}' is not available in WebContainer.\n\nSuggestion: Check available commands or use a package manager to install it.`,
+          `The command '${firstWord}' is not available in the workspace runner.\n\nSuggestion: Check available commands or use a package manager to install it.`,
       },
       {
         pattern: /Is a directory/,

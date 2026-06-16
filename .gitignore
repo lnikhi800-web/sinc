@@ -46,4 +46,8 @@ docs/instructions/Roadmap.md
 .cursorrules
 *.md
 .qodo
-.vercel
+
+# Local development and integration files
+.vercel/
+backend-runner/
+supabase/

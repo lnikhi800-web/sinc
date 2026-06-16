@@ -66,57 +66,42 @@ interface ChatBoxProps {
 }
 
 export const ChatBox: React.FC<ChatBoxProps> = (props) => {
-  const tiers = [
-    { id: 'auto', label: 'Auto (Default)', model: 'meta/llama-3.3-70b-instruct' },
-    { id: 'advanced', label: 'Advanced', model: 'nvidia/llama-3.1-nemotron-70b-instruct' },
-    { id: 'frontier', label: 'Frontier', model: 'nvidia/nemotron-4-340b-instruct' },
-  ];
-
-  const nvidiaProvider = props.providerList?.find((p) => p.name === 'NVIDIA') || props.providerList?.find((p) => p.name === 'OpenRouter') || props.providerList?.[0];
-  const currentTier = tiers.find((t) => t.model === props.model) || tiers[0];
-
-  const handleTierChange = (modelName: string) => {
-    if (props.setProvider && nvidiaProvider) {
-      props.setProvider(nvidiaProvider);
-    }
-    if (props.setModel) {
-      props.setModel(modelName);
-    }
-  };
-
   return (
     <div
       className={classNames(
-        'relative bg-bolt-elements-background-depth-2/85 backdrop-blur-lg p-4 rounded-2xl border border-purple-500/20 hover:border-purple-500/40 focus-within:border-cyan-500/50 shadow-[0_4px_30px_rgba(0,0,0,0.4),0_0_20px_rgba(168,85,247,0.15)] transition-all duration-300 w-full max-w-chat mx-auto z-prompt',
+        'relative bg-white/85 dark:bg-gray-950/85 backdrop-blur-md p-3.5 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm hover:shadow-md transition-all duration-300 relative w-full max-w-chat mx-auto z-prompt focus-within:border-gray-400 dark:focus-within:border-gray-600',
       )}
     >
-      <svg className={classNames(styles.PromptEffectContainer)}>
-        <defs>
-          <linearGradient
-            id="line-gradient"
-            x1="20%"
-            y1="0%"
-            x2="-14%"
-            y2="10%"
-            gradientUnits="userSpaceOnUse"
-            gradientTransform="rotate(-45)"
-          >
-            <stop offset="0%" stopColor="#b44aff" stopOpacity="0%"></stop>
-            <stop offset="40%" stopColor="#b44aff" stopOpacity="80%"></stop>
-            <stop offset="50%" stopColor="#b44aff" stopOpacity="80%"></stop>
-            <stop offset="100%" stopColor="#b44aff" stopOpacity="0%"></stop>
-          </linearGradient>
-          <linearGradient id="shine-gradient">
-            <stop offset="0%" stopColor="white" stopOpacity="0%"></stop>
-            <stop offset="40%" stopColor="#ffffff" stopOpacity="80%"></stop>
-            <stop offset="50%" stopColor="#ffffff" stopOpacity="80%"></stop>
-            <stop offset="100%" stopColor="white" stopOpacity="0%"></stop>
-          </linearGradient>
-        </defs>
-        <rect className={classNames(styles.PromptEffectLine)} pathLength="100" strokeLinecap="round"></rect>
-        <rect className={classNames(styles.PromptShine)} x="48" y="24" width="70" height="1"></rect>
-      </svg>
-      {/* Expanded model selectors and key warning overlays removed to keep viewport clean */}
+      <div>
+        <ClientOnly>
+          {() => (
+            <div className={props.isModelSettingsCollapsed ? 'hidden' : 'pb-3'}>
+              <ModelSelector
+                key={props.provider?.name + ':' + props.modelList.length}
+                model={props.model}
+                setModel={props.setModel}
+                modelList={props.modelList}
+                provider={props.provider}
+                setProvider={props.setProvider}
+                providerList={props.providerList || (PROVIDER_LIST as ProviderInfo[])}
+                apiKeys={props.apiKeys}
+                modelLoading={props.isModelLoading}
+              />
+              {(props.providerList || []).length > 0 &&
+                props.provider &&
+                !LOCAL_PROVIDERS.includes(props.provider.name) && (
+                  <APIKeyManager
+                    provider={props.provider}
+                    apiKey={props.apiKeys[props.provider.name] || ''}
+                    setApiKey={(key) => {
+                      props.onApiKeysChange(props.provider.name, key);
+                    }}
+                  />
+                )}
+            </div>
+          )}
+        </ClientOnly>
+      </div>
       <FilePreview
         files={props.uploadedFiles}
         imageDataList={props.imageDataList}
@@ -152,30 +137,32 @@ export const ChatBox: React.FC<ChatBoxProps> = (props) => {
         </div>
       )}
       <div
-        className={classNames('relative shadow-xs border border-bolt-elements-borderColor backdrop-blur rounded-lg')}
+        className={classNames(
+          'relative transition-all duration-250',
+          !props.isModelSettingsCollapsed && 'mt-2 pt-2 border-t border-gray-100 dark:border-gray-900',
+        )}
       >
         <textarea
           ref={props.textareaRef}
           className={classNames(
-            'w-full pl-4 pt-4 pr-16 outline-none resize-none text-bolt-elements-textPrimary placeholder-bolt-elements-textTertiary bg-transparent text-sm',
+            'w-full pl-3 pt-3 pr-16 outline-none resize-none text-bolt-elements-textPrimary placeholder-bolt-elements-textTertiary bg-transparent text-sm',
             'transition-all duration-200',
-            'hover:border-bolt-elements-focus',
           )}
           onDragEnter={(e) => {
             e.preventDefault();
-            e.currentTarget.style.border = '2px solid #1488fc';
+            e.currentTarget.style.outline = '2px solid var(--bolt-elements-borderColorActive)';
           }}
           onDragOver={(e) => {
             e.preventDefault();
-            e.currentTarget.style.border = '2px solid #1488fc';
+            e.currentTarget.style.outline = '2px solid var(--bolt-elements-borderColorActive)';
           }}
           onDragLeave={(e) => {
             e.preventDefault();
-            e.currentTarget.style.border = '1px solid var(--bolt-elements-borderColor)';
+            e.currentTarget.style.outline = 'none';
           }}
           onDrop={(e) => {
             e.preventDefault();
-            e.currentTarget.style.border = '1px solid var(--bolt-elements-borderColor)';
+            e.currentTarget.style.outline = 'none';
 
             const files = Array.from(e.dataTransfer.files);
             files.forEach((file) => {
@@ -263,7 +250,7 @@ export const ChatBox: React.FC<ChatBoxProps> = (props) => {
               {props.enhancingPrompt ? (
                 <div className="i-svg-spinners:90-ring-with-bg text-bolt-elements-loader-progress text-xl animate-spin"></div>
               ) : (
-                <div className="i-bolt:stars text-xl"></div>
+                <div className="i-ph:sparkles text-xl"></div>
               )}
             </IconButton>
 
@@ -279,7 +266,7 @@ export const ChatBox: React.FC<ChatBoxProps> = (props) => {
                 className={classNames(
                   'transition-all flex items-center gap-1 px-1.5',
                   props.chatMode === 'discuss'
-                    ? '!bg-bolt-elements-item-backgroundAccent !text-bolt-elements-item-contentAccent'
+                    ? '!bg-gray-200 dark:!bg-gray-800 !text-gray-900 dark:!text-white'
                     : 'bg-bolt-elements-item-backgroundDefault text-bolt-elements-item-contentDefault',
                 )}
                 onClick={() => {
@@ -290,23 +277,20 @@ export const ChatBox: React.FC<ChatBoxProps> = (props) => {
                 {props.chatMode === 'discuss' ? <span>Discuss</span> : <span />}
               </IconButton>
             )}
-            <div className="flex items-center gap-1.5 bg-bolt-elements-item-backgroundDefault hover:bg-bolt-elements-item-backgroundActive text-bolt-elements-textSecondary rounded-lg px-2.5 py-1.5 border border-bolt-elements-borderColor text-xs font-medium cursor-pointer relative group">
-              <span className="i-ph:cpu text-sm opacity-85" />
-              <span>{currentTier.label}</span>
-              <span className="i-ph:caret-down text-[10px]" />
-              <select
-                value={currentTier.model}
-                onChange={(e) => handleTierChange(e.target.value)}
-                className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
-                disabled={!props.providerList || props.providerList.length === 0}
-              >
-                {tiers.map((t) => (
-                  <option key={t.id} value={t.model} className="bg-bolt-elements-background-depth-1 text-bolt-elements-textPrimary">
-                    {t.label}
-                  </option>
-                ))}
-              </select>
-            </div>
+            <IconButton
+              title="Model Settings"
+              className={classNames('transition-all flex items-center gap-1', {
+                'bg-bolt-elements-item-backgroundAccent text-bolt-elements-item-contentAccent':
+                  props.isModelSettingsCollapsed,
+                'bg-bolt-elements-item-backgroundDefault text-bolt-elements-item-contentDefault':
+                  !props.isModelSettingsCollapsed,
+              })}
+              onClick={() => props.setIsModelSettingsCollapsed(!props.isModelSettingsCollapsed)}
+              disabled={!props.providerList || props.providerList.length === 0}
+            >
+              <div className={`i-ph:caret-${props.isModelSettingsCollapsed ? 'right' : 'down'} text-lg`} />
+              {props.isModelSettingsCollapsed ? <span className="text-xs">{props.model}</span> : <span />}
+            </IconButton>
           </div>
           {props.input.length > 3 ? (
             <div className="text-xs text-bolt-elements-textTertiary">
@@ -314,6 +298,7 @@ export const ChatBox: React.FC<ChatBoxProps> = (props) => {
               <kbd className="kdb px-1.5 py-0.5 rounded bg-bolt-elements-background-depth-2">Return</kbd> a new line
             </div>
           ) : null}
+          <SupabaseConnection />
           <ExpoQrModal open={props.qrModalOpen} onClose={() => props.setQrModalOpen(false)} />
         </div>
       </div>

@@ -751,7 +751,7 @@ function NodeButton({ depth, iconClasses, onClick, className, children }: Button
 type Node = FileNode | FolderNode;
 
 interface BaseNode {
-  id: number;
+  id: string;
   depth: number;
   name: string;
   fullPath: string;
@@ -778,7 +778,7 @@ function buildFileList(
 
   if (rootFolder === '/' && !hideRoot) {
     defaultDepth = 1;
-    fileList.push({ kind: 'folder', name: '/', depth: 0, id: 0, fullPath: '/' });
+    fileList.push({ kind: 'folder', name: '/', depth: 0, id: '/', fullPath: '/' });
   }
 
   for (const [filePath, dirent] of Object.entries(files)) {
@@ -806,7 +806,7 @@ function buildFileList(
       if (i === segments.length - 1 && dirent?.type === 'file') {
         fileList.push({
           kind: 'file',
-          id: fileList.length,
+          id: fullPath,
           name,
           fullPath,
           depth: depth + defaultDepth,
@@ -816,7 +816,7 @@ function buildFileList(
 
         fileList.push({
           kind: 'folder',
-          id: fileList.length,
+          id: fullPath,
           name,
           fullPath,
           depth: depth + defaultDepth,

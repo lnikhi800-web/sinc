@@ -1,27 +1,26 @@
 /**
- * Cleans webcontainer URLs from stack traces to show relative paths instead
+ * Cleans server runner proxy URLs from stack traces to show relative paths instead
  */
 export function cleanStackTrace(stackTrace: string): string {
   // Function to clean a single URL
   const cleanUrl = (url: string): string => {
-    const regex = /^https?:\/\/[^\/]+\.webcontainer-api\.io(\/.*)?$/;
-
-    if (!regex.test(url)) {
-      return url;
+    // Match server runner proxy URLs like http://localhost:8080/preview/:id/:port/path
+    const serverRegex = /^https?:\/\/[^/]+\/preview\/[^/]+\/\d+\/(.*?)$/;
+    const serverMatch = url.match(serverRegex);
+    if (serverMatch) {
+      return serverMatch[1];
     }
 
-    const pathRegex = /^https?:\/\/[^\/]+\.webcontainer-api\.io\/(.*?)$/;
-    const match = url.match(pathRegex);
-
-    return match?.[1] || '';
+    return url;
   };
 
   // Split the stack trace into lines and process each line
   return stackTrace
     .split('\n')
     .map((line) => {
-      // Match any URL in the line that contains webcontainer-api.io
-      return line.replace(/(https?:\/\/[^\/]+\.webcontainer-api\.io\/[^\s\)]+)/g, (match) => cleanUrl(match));
+      let cleaned = line;
+      cleaned = cleaned.replace(/(https?:\/\/[^\s)]+)/g, (match) => cleanUrl(match));
+      return cleaned;
     })
     .join('\n');
 }

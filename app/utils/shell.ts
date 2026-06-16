@@ -1,10 +1,10 @@
-import type { WebContainer, WebContainerProcess } from '@webcontainer/api';
+import type { WorkspaceRunner, RunnerProcess } from '~/lib/runner';
 import type { ITerminal } from '~/types/terminal';
 import { withResolvers } from './promises';
 import { atom } from 'nanostores';
 import { expoUrlAtom } from '~/lib/stores/qrCodeStore';
 
-export async function newShellProcess(webcontainer: WebContainer, terminal: ITerminal) {
+export async function newShellProcess(webcontainer: WorkspaceRunner, terminal: ITerminal) {
   const args: string[] = [];
 
   // we spawn a JSH process with a fallback cols and rows in case the process is not attached yet to a visible terminal
@@ -94,9 +94,9 @@ export type ExecutionResult = { output: string; exitCode: number } | undefined;
 export class BoltShell {
   #initialized: (() => void) | undefined;
   #readyPromise: Promise<void>;
-  #webcontainer: WebContainer | undefined;
+  #webcontainer: WorkspaceRunner | undefined;
   #terminal: ITerminal | undefined;
-  #process: WebContainerProcess | undefined;
+  #process: RunnerProcess | undefined;
   executionState = atom<
     { sessionId: string; active: boolean; executionPrms?: Promise<any>; abort?: () => void } | undefined
   >();
@@ -113,7 +113,7 @@ export class BoltShell {
     return this.#readyPromise;
   }
 
-  async init(webcontainer: WebContainer, terminal: ITerminal) {
+  async init(webcontainer: WorkspaceRunner, terminal: ITerminal) {
     this.#webcontainer = webcontainer;
     this.#terminal = terminal;
 
@@ -129,7 +129,7 @@ export class BoltShell {
     this.#initialized?.();
   }
 
-  async newBoltShellProcess(webcontainer: WebContainer, terminal: ITerminal) {
+  async newBoltShellProcess(webcontainer: WorkspaceRunner, terminal: ITerminal) {
     const args: string[] = [];
     const process = await webcontainer.spawn('/bin/jsh', ['--osc', ...args], {
       terminal: {
@@ -305,14 +305,21 @@ export class BoltShell {
       }
 
       // Check if command completion signal with exit code
-      const [, osc, , , code] = text.match(/\x1b\]654;([^\x07=]+)=?((-?\d+):(\d+))?\x07/) || [];
+      const oscMatch = buffer.match(/\x1b\]654;([^\x07=]+)=?((-?\d+):(\d+))?\x07/);
 
-      if (osc === 'exit') {
-        exitCode = parseInt(code, 10);
-      }
+      if (oscMatch) {
+        const [, oscName, , rawExitCode] = oscMatch;
+        if (oscName === 'exit') {
+          exitCode = parseInt(rawExitCode, 10);
+        }
 
-      if (osc === waitCode) {
-        break;
+        // Clean buffer up to match end to prevent reprocessing
+        const matchEndIndex = buffer.indexOf(oscMatch[0]) + oscMatch[0].length;
+        buffer = buffer.slice(matchEndIndex);
+
+        if (oscName === waitCode) {
+          break;
+        }
       }
     }
 

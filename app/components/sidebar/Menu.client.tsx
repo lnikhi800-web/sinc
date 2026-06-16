@@ -74,17 +74,6 @@ export const Menu = () => {
   const [selectionMode, setSelectionMode] = useState(false);
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
 
-  const [isDesktop, setIsDesktop] = useState(false);
-
-  useEffect(() => {
-    const handleResize = () => {
-      setIsDesktop(window.innerWidth >= 1024);
-    };
-    handleResize();
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
   const { filteredItems: filteredList, handleSearchChange } = useSearchFilter({
     items: list,
     searchFields: ['description'],
@@ -290,11 +279,6 @@ export const Menu = () => {
   }, [open, selectionMode]);
 
   useEffect(() => {
-    if (isDesktop) {
-      setOpen(true);
-      return;
-    }
-
     const enterThreshold = 20;
     const exitThreshold = 20;
 
@@ -317,7 +301,7 @@ export const Menu = () => {
     return () => {
       window.removeEventListener('mousemove', onMouseMove);
     };
-  }, [isSettingsOpen, isDesktop]);
+  }, [isSettingsOpen]);
 
   const handleDuplicate = async (id: string) => {
     await duplicateCurrentChat(id);
@@ -342,34 +326,26 @@ export const Menu = () => {
     <>
       <motion.div
         ref={menuRef}
-        initial={isDesktop ? 'open' : 'closed'}
-        animate={isDesktop ? 'open' : (open ? 'open' : 'closed')}
+        initial="closed"
+        animate={open ? 'open' : 'closed'}
         variants={menuVariants}
-        style={{ width: isDesktop ? '280px' : '300px' }}
+        style={{ width: '340px' }}
         className={classNames(
-          'flex selection-accent flex-col side-menu transition-all duration-300 text-sm',
-          isDesktop
-            ? 'relative h-full flex-shrink-0 bg-gray-950 dark:bg-[#06060c] border-r border-purple-500/10 shadow-none'
-            : 'fixed top-0 h-full rounded-r-2xl bg-white dark:bg-gray-950 border-r border-bolt-elements-borderColor shadow-sm',
-          isSettingsOpen ? 'z-40' : (isDesktop ? '' : 'z-sidebar'),
+          'flex selection-accent flex-col side-menu fixed top-0 h-full rounded-r-2xl',
+          'bg-white dark:bg-gray-950 border-r border-bolt-elements-borderColor',
+          'shadow-sm text-sm',
+          isSettingsOpen ? 'z-40' : 'z-sidebar',
         )}
       >
-        <div className={classNames(
-          "h-12 flex items-center justify-between px-4 border-b border-gray-100 dark:border-gray-800/50",
-          isDesktop ? "bg-gray-900/30" : "bg-gray-50/50 dark:bg-gray-900/50 rounded-tr-2xl"
-        )}>
+        <div className="h-12 flex items-center justify-between px-4 border-b border-gray-100 dark:border-gray-800/50 bg-gray-50 dark:bg-gray-900 rounded-tr-2xl">
           <div className="text-gray-900 dark:text-white font-medium flex items-center gap-2">
-            {isDesktop && (
-              <>
-                <img src="/sinc-logo.png" alt="SINC" className="w-6 h-6 rounded-md" />
-                <span style={{ fontFamily: 'Orbitron, sans-serif', fontWeight: 700, fontSize: '0.9rem', letterSpacing: '0.12em', background: 'linear-gradient(135deg, #A78BFA, #60D4F5)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
-                  SINC
-                </span>
-              </>
-            )}
+            <img src="/sinc-logo.png" alt="SINC" className="w-6 h-6 rounded-md border border-gray-200 dark:border-gray-800" />
+            <span className="font-bold text-sm tracking-wider text-bolt-elements-textPrimary" style={{ fontFamily: 'Orbitron, sans-serif' }}>
+              SINC
+            </span>
           </div>
           <div className="flex items-center gap-3">
-            <HelpButton onClick={() => window.open('https://stackblitz-labs.github.io/bolt.diy/', '_blank')} />
+            <HelpButton onClick={() => window.open('/', '_blank')} />
             <span className="font-medium text-sm text-gray-900 dark:text-white truncate">
               {profile?.username || 'Guest User'}
             </span>
@@ -394,17 +370,17 @@ export const Menu = () => {
             <div className="flex gap-2">
               <a
                 href="/"
-                className="flex-1 flex gap-2 items-center justify-center bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white rounded-xl px-4 py-2.5 transition-all duration-300 shadow-[0_0_15px_rgba(168,85,247,0.25)] hover:shadow-[0_0_20px_rgba(168,85,247,0.45)] border border-purple-400/25 text-sm font-semibold"
+                className="flex-1 flex gap-2 items-center bg-gray-100 dark:bg-gray-800/40 text-gray-800 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700/60 rounded-lg px-4 py-2 transition-colors"
               >
-                <span className="inline-block i-ph:plus-circle h-4.5 w-4.5" />
-                <span>Start new chat</span>
+                <span className="inline-block i-ph:plus-circle h-4 w-4" />
+                <span className="text-sm font-medium">Start new chat</span>
               </a>
               <button
                 onClick={toggleSelectionMode}
                 className={classNames(
                   'flex gap-1 items-center rounded-lg px-3 py-2 transition-colors',
                   selectionMode
-                    ? 'bg-purple-600 dark:bg-purple-500 text-white border border-purple-700 dark:border-purple-600'
+                    ? 'bg-gray-800 dark:bg-gray-200 text-white dark:text-gray-950 border border-gray-900 dark:border-white'
                     : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700',
                 )}
                 aria-label={selectionMode ? 'Exit selection mode' : 'Enter selection mode'}
@@ -417,7 +393,7 @@ export const Menu = () => {
                 <span className="i-ph:magnifying-glass h-4 w-4 text-gray-400 dark:text-gray-500" />
               </div>
               <input
-                className="w-full bg-gray-50/50 dark:bg-[#0c0c14] relative pl-9 pr-3 py-2 rounded-xl focus:outline-none focus:ring-1 focus:ring-purple-500/35 text-sm text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-500 border border-gray-200 dark:border-purple-500/10 focus:border-purple-500/30 transition-all duration-300"
+                className="w-full bg-gray-50 dark:bg-gray-900 relative pl-9 pr-3 py-2 rounded-lg focus:outline-none focus:ring-1 focus:ring-gray-500/50 text-sm text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-500 border border-gray-200 dark:border-gray-800"
                 type="search"
                 placeholder="Search chats..."
                 onChange={handleSearchChange}

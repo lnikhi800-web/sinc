@@ -102,22 +102,22 @@ export const ToolInvocations = memo(({ toolInvocations, toolCallAnnotations, add
   }
 
   return (
-    <div className="tool-invocation border border-purple-500/15 flex flex-col overflow-hidden rounded-xl w-full bg-[#080812]/90 backdrop-blur-md shadow-[0_0_15px_rgba(168,85,247,0.05)] transition-all duration-200">
+    <div className="tool-invocation border border-bolt-elements-borderColor flex flex-col overflow-hidden rounded-lg w-full transition-border duration-150">
       <div className="flex">
         <button
-          className="flex items-stretch bg-transparent hover:bg-purple-500/5 w-full overflow-hidden transition-colors"
+          className="flex items-stretch bg-bolt-elements-background-depth-2 hover:bg-bolt-elements-artifacts-backgroundHover w-full overflow-hidden"
           onClick={toggleDetails}
           aria-label={showDetails ? 'Collapse details' : 'Expand details'}
         >
           <div className="p-2.5">
-            <div className="i-ph:wrench text-xl text-purple-400 hover:text-cyan-400 transition-colors"></div>
+            <div className="i-ph:wrench text-xl text-bolt-elements-textSecondary hover:text-bolt-elements-textPrimary transition-colors"></div>
           </div>
           <div className="p-2.5 w-full text-left">
-            <div className="w-full text-zinc-100 font-semibold leading-5 text-sm">
+            <div className="w-full text-bolt-elements-textPrimary font-medium leading-5 text-sm">
               MCP Tool Invocations{' '}
               {hasToolResults && (
-                <span className="text-purple-300/60 text-xs ml-1.5 font-normal">
-                  ({toolResults.length} tool{toolResults.length > 1 ? 's' : ''} used)
+                <span className="w-full w-full text-bolt-elements-textSecondary text-xs mt-0.5">
+                  ({toolResults.length} tool{hasToolResults ? 's' : ''} used)
                 </span>
               )}
             </div>
@@ -130,12 +130,12 @@ export const ToolInvocations = memo(({ toolInvocations, toolCallAnnotations, add
               animate={{ width: 'auto' }}
               exit={{ width: 0 }}
               transition={{ duration: 0.15, ease: cubicEasingFn }}
-              className="bg-transparent hover:bg-purple-500/5 border-l border-purple-500/10"
+              className="bg-bolt-elements-artifacts-background hover:bg-bolt-elements-artifacts-backgroundHover"
               onClick={toggleDetails}
             >
-              <div className="p-2 px-3">
+              <div className="p-2">
                 <div
-                  className={`${showDetails ? 'i-ph:caret-up-bold' : 'i-ph:caret-down-bold'} text-lg text-purple-300/80 hover:text-purple-200 transition-colors`}
+                  className={`${showDetails ? 'i-ph:caret-up-bold' : 'i-ph:caret-down-bold'} text-xl text-bolt-elements-textSecondary hover:text-bolt-elements-textPrimary transition-colors`}
                 ></div>
               </div>
             </motion.button>
@@ -151,9 +151,9 @@ export const ToolInvocations = memo(({ toolInvocations, toolCallAnnotations, add
             exit={{ height: '0px' }}
             transition={{ duration: 0.15 }}
           >
-            <div className="h-[1px] bg-purple-500/10" />
+            <div className="bg-bolt-elements-artifacts-borderColor h-[1px]" />
 
-            <div className="px-3 py-3 text-left bg-[#0a0a16]/40">
+            <div className="px-3 py-3 text-left bg-bolt-elements-background-depth-2">
               <ToolCallsList
                 toolInvocations={toolCalls}
                 toolCallAnnotations={toolCallAnnotations}
@@ -172,9 +172,9 @@ export const ToolInvocations = memo(({ toolInvocations, toolCallAnnotations, add
             exit={{ height: '0px' }}
             transition={{ duration: 0.15 }}
           >
-            <div className="h-[1px] bg-purple-500/10" />
+            <div className="bg-bolt-elements-artifacts-borderColor h-[1px]" />
 
-            <div className="p-5 text-left bg-[#0a0a16]/20">
+            <div className="p-5 text-left bg-bolt-elements-actions-background">
               <ToolResultsList toolInvocations={toolResults} toolCallAnnotations={toolCallAnnotations} theme={theme} />
             </div>
           </motion.div>
@@ -353,20 +353,24 @@ const ToolCallsList = memo(({ toolInvocations, toolCallAnnotations, addToolResul
               animate="visible"
               transition={{ duration: 0.2, ease: cubicEasingFn }}
             >
-              <div className="bg-[#0c0c1b]/80 border border-purple-500/10 rounded-xl p-3 shadow-md">
-                <div key={toolCallId} className="flex flex-col sm:flex-row gap-3 sm:items-center">
-                  <div className="flex flex-col">
-                    <span className="mr-auto font-semibold text-sm text-purple-200">
+              <div className="bg-bolt-elements-background-depth-3 rounded-lg p-2">
+                <div key={toolCallId} className="flex gap-1">
+                  <div className="flex flex-col items-center ">
+                    <span className="mr-auto font-light font-normal text-md text-bolt-elements-textPrimary rounded-md">
                       {toolName}
                     </span>
-                    <span className="text-xs text-zinc-400 font-normal break-words max-w-sm mt-0.5">
+                    <span className="text-xs text-bolt-elements-textSecondary font-light break-words max-w-64">
                       {annotation?.toolDescription}
                     </span>
                   </div>
-                  <div className="flex items-center justify-end gap-2 sm:ml-auto">
+                  <div className="flex items-center justify-end gap-2 ml-auto">
                     <button
                       className={classNames(
-                        'h-9 px-3 rounded-lg text-xs font-medium bg-transparent border border-transparent hover:border-red-500/20 text-zinc-400 hover:text-red-300 transition-all duration-200 flex items-center gap-1.5 cursor-pointer',
+                        'h-10 px-2.5 py-1.5 rounded-lg text-xs h-auto',
+                        'bg-transparent',
+                        'text-bolt-elements-textTertiary hover:text-bolt-elements-textPrimary',
+                        'transition-all duration-200',
+                        'flex items-center gap-2',
                       )}
                       onClick={() =>
                         addToolResult({
@@ -375,13 +379,13 @@ const ToolCallsList = memo(({ toolInvocations, toolCallAnnotations, addToolResul
                         })
                       }
                     >
-                      Cancel <span className="opacity-40 text-[9px] font-mono ml-1">{isMac ? '⌘⌫' : 'Ctrl+Backspace'}</span>
+                      Cancel <span className="opacity-70 text-xs ml-1">{isMac ? '⌘⌫' : 'Ctrl+Backspace'}</span>
                     </button>
                     <button
                       className={classNames(
-                        'h-9 inline-flex items-center gap-1.5 px-4 text-xs font-semibold rounded-lg transition-all cursor-pointer',
-                        'bg-gradient-to-r from-purple-600 to-cyan-600 hover:from-purple-500 hover:to-cyan-500 border border-purple-500/30 hover:border-cyan-500/30 shadow-[0_0_10px_rgba(168,85,247,0.15)]',
-                        'text-white',
+                        'h-10 inline-flex items-center gap-2 px-3 py-1.5 text-xs font-normal rounded-lg transition-colors',
+                        'bg-bolt-elements-background-depth-2 border border-bolt-elements-borderColor',
+                        'text-accent-500 hover:text-bolt-elements-textPrimary',
                         'disabled:opacity-50 disabled:cursor-not-allowed',
                       )}
                       onClick={() =>
@@ -391,7 +395,7 @@ const ToolCallsList = memo(({ toolInvocations, toolCallAnnotations, addToolResul
                         })
                       }
                     >
-                      Run Tool <span className="opacity-60 text-[9px] font-mono ml-1">{isMac ? '⌘↵' : 'Ctrl+Enter'}</span>
+                      Run tool <span className="opacity-70 text-xs ml-1">{isMac ? '⌘↵' : 'Ctrl+Enter'}</span>
                     </button>
                   </div>
                 </div>

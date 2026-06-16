@@ -1,6 +1,6 @@
-import type { WebContainer } from '@webcontainer/api';
+import type { WorkspaceRunner } from '~/lib/runner';
 import { useCallback, useEffect, useRef, useState, type MutableRefObject } from 'react';
-import { webcontainer as webcontainerPromise } from '~/lib/webcontainer';
+import { runner as runnerPromise } from '~/lib/runner';
 import git, { type GitAuth, type PromiseFsClient } from 'isomorphic-git';
 import http from 'isomorphic-git/http/web';
 import Cookies from 'js-cookie';
@@ -30,13 +30,14 @@ const saveGitAuth = (url: string, auth: GitAuth) => {
 
 export function useGit() {
   const [ready, setReady] = useState(false);
-  const [webcontainer, setWebcontainer] = useState<WebContainer>();
+  const [runner, setRunner] = useState<WorkspaceRunner>();
   const [fs, setFs] = useState<PromiseFsClient>();
   const fileData = useRef<Record<string, { data: any; encoding?: string }>>({});
+
   useEffect(() => {
-    webcontainerPromise.then((container) => {
+    runnerPromise.then((container) => {
       fileData.current = {};
-      setWebcontainer(container);
+      setRunner(container);
       setFs(getFs(container, fileData));
       setReady(true);
     });
@@ -44,8 +45,8 @@ export function useGit() {
 
   const gitClone = useCallback(
     async (url: string, retryCount = 0) => {
-      if (!webcontainer || !fs || !ready) {
-        throw new Error('Webcontainer not initialized. Please try again later.');
+      if (!runner || !fs || !ready) {
+        throw new Error('Workspace runner not initialized. Please try again later.');
       }
 
       fileData.current = {};
@@ -84,7 +85,7 @@ export function useGit() {
         await git.clone({
           fs,
           http,
-          dir: webcontainer.workdir,
+          dir: runner.workdir,
           url: baseUrl,
           depth: 1,
           singleBranch: true,
@@ -135,7 +136,7 @@ export function useGit() {
           data[key] = value;
         }
 
-        return { workdir: webcontainer.workdir, data };
+        return { workdir: runner.workdir, data };
       } catch (error) {
         console.error('Git clone error:', error);
 
@@ -175,23 +176,23 @@ export function useGit() {
         }
       }
     },
-    [webcontainer, fs, ready],
+    [runner, fs, ready],
   );
 
   return { ready, gitClone };
 }
 
 const getFs = (
-  webcontainer: WebContainer,
+  runner: WorkspaceRunner,
   record: MutableRefObject<Record<string, { data: any; encoding?: string }>>,
 ) => ({
   promises: {
     readFile: async (path: string, options: any) => {
       const encoding = options?.encoding;
-      const relativePath = pathUtils.relative(webcontainer.workdir, path);
+      const relativePath = pathUtils.relative(runner.workdir, path);
 
       try {
-        const result = await webcontainer.fs.readFile(relativePath, encoding);
+        const result = await runner.fs.readFile(relativePath, encoding);
 
         return result;
       } catch (error) {
@@ -199,7 +200,7 @@ const getFs = (
       }
     },
     writeFile: async (path: string, data: any, options: any = {}) => {
-      const relativePath = pathUtils.relative(webcontainer.workdir, path);
+      const relativePath = pathUtils.relative(runner.workdir, path);
 
       if (record.current) {
         record.current[relativePath] = { data, encoding: options?.encoding };
@@ -209,12 +210,12 @@ const getFs = (
         // Handle encoding properly based on data type
         if (data instanceof Uint8Array) {
           // For binary data, don't pass encoding
-          const result = await webcontainer.fs.writeFile(relativePath, data);
+          const result = await runner.fs.writeFile(relativePath, data);
           return result;
         } else {
           // For text data, use the encoding if provided
           const encoding = options?.encoding || 'utf8';
-          const result = await webcontainer.fs.writeFile(relativePath, data, encoding);
+          const result = await runner.fs.writeFile(relativePath, data, encoding);
 
           return result;
         }
@@ -223,10 +224,10 @@ const getFs = (
       }
     },
     mkdir: async (path: string, options: any) => {
-      const relativePath = pathUtils.relative(webcontainer.workdir, path);
+      const relativePath = pathUtils.relative(runner.workdir, path);
 
       try {
-        const result = await webcontainer.fs.mkdir(relativePath, { ...options, recursive: true });
+        const result = await runner.fs.mkdir(relativePath, { ...options, recursive: true });
 
         return result;
       } catch (error) {
@@ -234,10 +235,10 @@ const getFs = (
       }
     },
     readdir: async (path: string, options: any) => {
-      const relativePath = pathUtils.relative(webcontainer.workdir, path);
+      const relativePath = pathUtils.relative(runner.workdir, path);
 
       try {
-        const result = await webcontainer.fs.readdir(relativePath, options);
+        const result = await runner.fs.readdir(relativePath, options);
 
         return result;
       } catch (error) {
@@ -245,10 +246,10 @@ const getFs = (
       }
     },
     rm: async (path: string, options: any) => {
-      const relativePath = pathUtils.relative(webcontainer.workdir, path);
+      const relativePath = pathUtils.relative(runner.workdir, path);
 
       try {
-        const result = await webcontainer.fs.rm(relativePath, { ...(options || {}) });
+        const result = await runner.fs.rm(relativePath, { ...(options || {}) });
 
         return result;
       } catch (error) {
@@ -256,10 +257,10 @@ const getFs = (
       }
     },
     rmdir: async (path: string, options: any) => {
-      const relativePath = pathUtils.relative(webcontainer.workdir, path);
+      const relativePath = pathUtils.relative(runner.workdir, path);
 
       try {
-        const result = await webcontainer.fs.rm(relativePath, { recursive: true, ...options });
+        const result = await runner.fs.rm(relativePath, { recursive: true, ...options });
 
         return result;
       } catch (error) {
@@ -267,17 +268,17 @@ const getFs = (
       }
     },
     unlink: async (path: string) => {
-      const relativePath = pathUtils.relative(webcontainer.workdir, path);
+      const relativePath = pathUtils.relative(runner.workdir, path);
 
       try {
-        return await webcontainer.fs.rm(relativePath, { recursive: false });
+        return await runner.fs.rm(relativePath, { recursive: false });
       } catch (error) {
         throw error;
       }
     },
     stat: async (path: string) => {
       try {
-        const relativePath = pathUtils.relative(webcontainer.workdir, path);
+        const relativePath = pathUtils.relative(runner.workdir, path);
         const dirPath = pathUtils.dirname(relativePath);
         const fileName = pathUtils.basename(relativePath);
 
@@ -308,8 +309,8 @@ const getFs = (
           };
         }
 
-        const resp = await webcontainer.fs.readdir(dirPath, { withFileTypes: true });
-        const fileInfo = resp.find((x) => x.name === fileName);
+        const resp = await runner.fs.readdir(dirPath, { withFileTypes: true });
+        const fileInfo = resp.find((x: any) => x.name === fileName);
 
         if (!fileInfo) {
           const err = new Error(`ENOENT: no such file or directory, stat '${path}'`) as NodeJS.ErrnoException;
@@ -355,22 +356,22 @@ const getFs = (
       }
     },
     lstat: async (path: string) => {
-      return await getFs(webcontainer, record).promises.stat(path);
+      return await getFs(runner, record).promises.stat(path);
     },
     readlink: async (path: string) => {
       throw new Error(`EINVAL: invalid argument, readlink '${path}'`);
     },
     symlink: async (target: string, path: string) => {
       /*
-       * Since WebContainer doesn't support symlinks,
-       * we'll throw a "operation not supported" error
+       * Since WorkspaceRunner doesn't support symlinks,
+       * we'll throw a "operation not permitted" error
        */
       throw new Error(`EPERM: operation not permitted, symlink '${target}' -> '${path}'`);
     },
 
     chmod: async (_path: string, _mode: number) => {
       /*
-       * WebContainer doesn't support changing permissions,
+       * WorkspaceRunner doesn't support changing permissions,
        * but we can pretend it succeeded for compatibility
        */
       return await Promise.resolve();

@@ -1,7 +1,7 @@
 import { useState, useMemo, useCallback, useEffect } from 'react';
-import type { TextSearchOptions, TextSearchOnProgressCallback, WebContainer } from '@webcontainer/api';
+import type { TextSearchOptions, TextSearchOnProgressCallback, WorkspaceRunner } from '~/lib/runner';
 import { workbenchStore } from '~/lib/stores/workbench';
-import { webcontainer } from '~/lib/webcontainer';
+import { runner } from '~/lib/runner';
 import { WORK_DIR } from '~/utils/constants';
 import { debounce } from '~/utils/debounce';
 
@@ -14,13 +14,13 @@ interface DisplayMatch {
 }
 
 async function performTextSearch(
-  instance: WebContainer,
+  instance: WorkspaceRunner,
   query: string,
   options: Omit<TextSearchOptions, 'folders'>,
   onProgress: (results: DisplayMatch[]) => void,
 ): Promise<void> {
   if (!instance || typeof instance.internal?.textSearch !== 'function') {
-    console.error('WebContainer instance not available or internal searchText method is missing/not a function.');
+    console.error('Workspace runner not available or internal searchText method is missing/not a function.');
 
     return;
   }
@@ -67,7 +67,7 @@ async function performTextSearch(
   };
 
   try {
-    await instance.internal.textSearch(query, searchOptions, progressCallback);
+    await instance.internal.textSearch?.(query, searchOptions, progressCallback);
   } catch (error) {
     console.error('Error during internal text search:', error);
   }
@@ -126,7 +126,7 @@ export function Search() {
     const start = Date.now();
 
     try {
-      const instance = await webcontainer;
+      const instance = await runner;
       const options: Omit<TextSearchOptions, 'folders'> = {
         homeDir: WORK_DIR, // Adjust this path as needed
         includes: ['**/*.*'],

@@ -25,7 +25,7 @@ export function ExamplePrompts(sendMessage?: { (event: React.UIEvent, messageInp
               onClick={(event) => {
                 sendMessage?.(event, examplePrompt.text);
               }}
-              className="border border-purple-500/15 hover:border-purple-500/45 rounded-full bg-purple-950/10 hover:bg-purple-950/25 dark:bg-[#06060c]/40 dark:hover:bg-purple-500/10 text-purple-300/80 hover:text-purple-200 px-3.5 py-1.5 text-xs transition-all duration-200 shadow-[0_0_10px_rgba(168,85,247,0.02)] cursor-pointer"
+              className="border border-gray-200 dark:border-gray-800 hover:border-gray-400 dark:hover:border-gray-600 rounded-lg bg-white/50 dark:bg-gray-950/50 hover:bg-gray-50 dark:hover:bg-gray-900 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white px-3.5 py-1.5 text-xs transition-all duration-200"
             >
               {examplePrompt.text}
             </button>

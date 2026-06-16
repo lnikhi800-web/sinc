@@ -58,16 +58,25 @@ interface MessageState {
 }
 
 function cleanoutMarkdownSyntax(content: string) {
-  const codeBlockRegex = /^\s*```\w*\n([\s\S]*?)\n\s*```\s*$/;
-  const match = content.match(codeBlockRegex);
+  // Primary pattern: standard multiline fenced code block
+  const multilineRegex = /^\s*```\w*\n([\s\S]*?)\n\s*```\s*$/;
+  const multilineMatch = content.match(multilineRegex);
 
-  // console.log('matching', !!match, content);
-
-  if (match) {
-    return match[1]; // Remove common leading 4-space indent
-  } else {
-    return content;
+  if (multilineMatch) {
+    return multilineMatch[1];
   }
+
+  // Fallback: LLMs occasionally omit the newline after the opening fence,
+  // producing a collapsed block like "```js\nimport ... import ..."
+  // or even "```jsimport ...```". Normalise those by stripping the fences.
+  const collapsedRegex = /^\s*```\w*\s*([\s\S]*?)\s*```\s*$/;
+  const collapsedMatch = content.match(collapsedRegex);
+
+  if (collapsedMatch) {
+    return collapsedMatch[1];
+  }
+
+  return content;
 }
 
 function cleanEscapedTags(content: string) {

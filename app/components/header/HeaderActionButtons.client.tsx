@@ -21,18 +21,18 @@ export function HeaderActionButtons({ chatStarted: _chatStarted }: HeaderActionB
 
       {/* Debug Tools */}
       {shouldShowButtons && (
-        <div className="flex border border-bolt-elements-borderColor rounded-md overflow-hidden text-sm">
+        <div className="flex border border-gray-200 dark:border-gray-800 rounded-md overflow-hidden text-sm">
           <button
             onClick={() =>
               window.open('https://github.com/stackblitz-labs/bolt.diy/issues/new?template=bug_report.yml', '_blank')
             }
-            className="rounded-l-md items-center justify-center [&:is(:disabled,.disabled)]:cursor-not-allowed [&:is(:disabled,.disabled)]:opacity-60 px-3 py-1.5 text-xs bg-accent-500 text-white hover:text-bolt-elements-item-contentAccent [&:not(:disabled,.disabled)]:hover:bg-bolt-elements-button-primary-backgroundHover outline-accent-500 flex gap-1.5"
+            className="items-center justify-center [&:is(:disabled,.disabled)]:cursor-not-allowed [&:is(:disabled,.disabled)]:opacity-60 px-3 py-1.5 text-xs bg-white hover:bg-gray-50 dark:bg-gray-900 dark:hover:bg-gray-800 text-gray-800 dark:text-gray-200 outline-none flex gap-1.5 transition-colors"
             title="Report Bug"
           >
-            <div className="i-ph:bug" />
+            <div className="i-ph:bug text-sm" />
             <span>Report Bug</span>
           </button>
-          <div className="w-px bg-bolt-elements-borderColor" />
+          <div className="w-px bg-gray-200 dark:bg-gray-800" />
           <button
             onClick={async () => {
               try {
@@ -42,10 +42,10 @@ export function HeaderActionButtons({ chatStarted: _chatStarted }: HeaderActionB
                 console.error('Failed to download debug log:', error);
               }
             }}
-            className="rounded-r-md items-center justify-center [&:is(:disabled,.disabled)]:cursor-not-allowed [&:is(:disabled,.disabled)]:opacity-60 px-3 py-1.5 text-xs bg-accent-500 text-white hover:text-bolt-elements-item-contentAccent [&:not(:disabled,.disabled)]:hover:bg-bolt-elements-button-primary-backgroundHover outline-accent-500 flex gap-1.5"
+            className="items-center justify-center [&:is(:disabled,.disabled)]:cursor-not-allowed [&:is(:disabled,.disabled)]:opacity-60 px-3 py-1.5 text-xs bg-white hover:bg-gray-50 dark:bg-gray-900 dark:hover:bg-gray-800 text-gray-800 dark:text-gray-200 outline-none flex gap-1.5 transition-colors"
             title="Download Debug Log"
           >
-            <div className="i-ph:download" />
+            <div className="i-ph:download text-sm" />
             <span>Debug Log</span>
           </button>
         </div>

@@ -19,7 +19,7 @@ import {
 } from './db';
 import type { FileMap } from '~/lib/stores/files';
 import type { Snapshot } from './types';
-import { webcontainer } from '~/lib/webcontainer';
+import { runner } from '~/lib/runner';
 import { detectProjectCommands, createCommandActionsString } from '~/utils/projectCommands';
 import type { ContextAnnotation } from '~/types/context';
 
@@ -41,8 +41,7 @@ export const description = atom<string | undefined>(undefined);
 export const chatMetadata = atom<IChatMetadata | undefined>(undefined);
 export function useChatHistory() {
   const navigate = useNavigate();
-  const loaderData = useLoaderData<{ id?: string }>() as { id?: string } | null | undefined;
-  const mixedId = loaderData?.id;
+  const { id: mixedId } = useLoaderData<{ id?: string }>();
   const [searchParams] = useSearchParams();
 
   const [archivedMessages, setArchivedMessages] = useState<Message[]>([]);
@@ -131,7 +130,7 @@ export function useChatHistory() {
                   role: 'assistant',
 
                   // Combine followup message and the artifact with files and command actions
-                  content: `Bolt Restored your chat from a snapshot. You can revert this message to load the full chat history.
+                  content: `SINC Restored your chat from a snapshot. You can revert this message to load the full chat history.
                   <boltArtifact id="restored-project-setup" title="Restored Project & Setup" type="bundled">
                   ${Object.entries(snapshot?.files || {})
                     .map(([key, value]) => {
@@ -225,7 +224,7 @@ ${value.content}
 
   const restoreSnapshot = useCallback(async (id: string, snapshot?: Snapshot) => {
     // const snapshotStr = localStorage.getItem(`snapshot:${id}`); // Remove localStorage usage
-    const container = await webcontainer;
+    const container = await runner;
 
     const validSnapshot = snapshot || { chatIndex: '', files: {} };
 
@@ -248,7 +247,7 @@ ${value.content}
           key = key.replace(container.workdir, '');
         }
 
-        await container.fs.writeFile(key, value.content, { encoding: value.isBinary ? undefined : 'utf8' });
+        await container.fs.writeFile(key, value.content, value.isBinary ? undefined : 'utf8');
       } else {
       }
     });

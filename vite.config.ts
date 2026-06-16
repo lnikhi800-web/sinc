@@ -1,42 +1,31 @@
 import { cloudflareDevProxyVitePlugin as remixCloudflareDevProxy, vitePlugin as remixVitePlugin } from '@remix-run/dev';
-import { vercelPreset } from '@vercel/remix/vite';
 import UnoCSS from 'unocss/vite';
 import { defineConfig, type ViteDevServer } from 'vite';
 import { nodePolyfills } from 'vite-plugin-node-polyfills';
 import { optimizeCssModules } from 'vite-plugin-optimize-css-modules';
 import tsconfigPaths from 'vite-tsconfig-paths';
 import * as dotenv from 'dotenv';
-import { fileURLToPath } from 'node:url';
-import path from 'node:path';
 
 // Load environment variables from multiple files
 dotenv.config({ path: '.env.local' });
 dotenv.config({ path: '.env' });
 dotenv.config();
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const bufferSsrPath = path.resolve(__dirname, 'app/shims/buffer-ssr.ts');
-
 export default defineConfig((config) => {
   return {
-    resolve: {
-      alias: config.isSsrBuild ? {
-        'buffer': bufferSsrPath,
-        'stream': 'node:stream',
-        'util': 'node:util',
-        'process': 'node:process',
-        'vite-plugin-node-polyfills/shims/buffer': bufferSsrPath,
-        'vite-plugin-node-polyfills/shims/process': 'node:process',
-      } : {},
-    },
     define: {
       'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV),
     },
     build: {
       target: 'esnext',
     },
+    server: {
+      watch: {
+        ignored: ['**/backend-runner/**'],
+      },
+    },
     plugins: [
-      !config.isSsrBuild && nodePolyfills({
+      nodePolyfills({
         include: ['buffer', 'process', 'util', 'stream'],
         globals: {
           Buffer: true,
@@ -59,7 +48,7 @@ export default defineConfig((config) => {
           return null;
         },
       },
-      config.mode !== 'test' && !process.env.VERCEL && remixCloudflareDevProxy(),
+      config.mode !== 'test' && remixCloudflareDevProxy(),
       remixVitePlugin({
         future: {
           v3_fetcherPersist: true,
@@ -67,7 +56,6 @@ export default defineConfig((config) => {
           v3_throwAbortReason: true,
           v3_lazyRouteDiscovery: true,
         },
-        presets: [vercelPreset()],
       }),
       UnoCSS(),
       tsconfigPaths(),

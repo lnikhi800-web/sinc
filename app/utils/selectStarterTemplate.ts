@@ -66,6 +66,9 @@ MOST IMPORTANT: YOU DONT HAVE TIME TO THINK JUST START RESPONDING BASED ON HUNCH
 const templates: Template[] = STARTER_TEMPLATES.filter((t) => !t.name.includes('shadcn'));
 
 const parseSelectedTemplate = (llmOutput: string): { template: string; title: string } | null => {
+  if (!llmOutput || typeof llmOutput !== 'string') {
+    return null;
+  }
   try {
     // Extract content between <templateName> tags
     const templateNameMatch = llmOutput.match(/<templateName>(.*?)<\/templateName>/);
@@ -90,26 +93,44 @@ export const selectStarterTemplate = async (options: { message: string; model: s
     provider,
     system: starterTemplateSelectionPrompt(templates),
   };
-  const response = await fetch('/api/llmcall', {
-    method: 'POST',
-    body: JSON.stringify(requestBody),
-  });
-  const respJson: { text: string } = await response.json();
-  console.log(respJson);
 
-  const { text } = respJson;
-  const selectedTemplate = parseSelectedTemplate(text);
+  try {
+    const response = await fetch('/api/llmcall', {
+      method: 'POST',
+      body: JSON.stringify(requestBody),
+    });
 
-  if (selectedTemplate) {
-    return selectedTemplate;
-  } else {
-    console.log('No template selected, using blank template');
+    if (!response.ok) {
+      console.error('Failed to call API route for starter template selection:', response.status, response.statusText);
+      const errJson = (await response.json().catch(() => null)) as any;
+      if (errJson && errJson.message) {
+        console.error('API Error details:', errJson.message);
+      }
+      return {
+        template: 'blank',
+        title: '',
+      };
+    }
 
-    return {
-      template: 'blank',
-      title: '',
-    };
+    const respJson: { text: string } = await response.json();
+    console.log(respJson);
+
+    const { text } = respJson;
+    const selectedTemplate = parseSelectedTemplate(text);
+
+    if (selectedTemplate) {
+      return selectedTemplate;
+    }
+  } catch (error) {
+    console.error('Error selecting starter template:', error);
   }
+
+  console.log('No template selected, using blank template');
+
+  return {
+    template: 'blank',
+    title: '',
+  };
 };
 
 const getGitHubRepoContent = async (repoName: string): Promise<{ name: string; path: string; content: string }[]> => {
@@ -171,6 +192,27 @@ export async function getTemplates(templateName: string, title?: string) {
     ignoreFile: [] as typeof filteredFiles,
   };
 
+  // Inject CLAUDE.md rules file to guide the generated workspace AI agent
+  filesToImport.files.push({
+    name: 'CLAUDE.md',
+    path: 'CLAUDE.md',
+    content: `# Project Constraints & Rules
+
+## Tech Stack
+- Framework: React (Single Page Application)
+- Build Tool: Vite
+- Language: TypeScript
+- CSS: Tailwind CSS
+- Icons: Lucide React
+- Routing: React Router
+
+## Instructions
+- Keep all modifications clean and modular.
+- Do not run arbitrary shell setup scripts (npm install, configurations) unless absolutely necessary.
+- CRITICAL: Never write comments (like \`//\` or \`#\`) inside shell actions. Write only executable commands.
+`
+  });
+
   if (templateIgnoreFile) {
     // redacting files specified in ignore file
     const ignorepatterns = templateIgnoreFile.content.split('\n').map((x) => x.trim());
@@ -184,7 +226,7 @@ export async function getTemplates(templateName: string, title?: string) {
   }
 
   const assistantMessage = `
-Bolt is initializing your project with the required files using the ${template.name} template.
+SINC is initializing your project with the required files using the ${template.name} template.
 <boltArtifact id="imported-files" title="${title || 'Create initial files'}" type="bundled">
 ${filesToImport.files
   .map(
