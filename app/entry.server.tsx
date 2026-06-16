@@ -3,7 +3,6 @@ import { RemixServer } from '@remix-run/react';
 import { isbot } from 'isbot';
 import { renderToPipeableStream } from 'react-dom/server';
 import { renderHeadToString } from 'remix-island';
-import { PassThrough } from 'node:stream';
 import { Head } from './root';
 import { themeStore } from '~/lib/stores/theme';
 
@@ -22,45 +21,58 @@ export default async function handleRequest(
   return new Promise<Response>((resolve, reject) => {
     let didError = false;
     let statusCode = responseStatusCode;
+    let resolved = false;
 
     const { pipe, abort } = renderToPipeableStream(
       <RemixServer context={remixContext} url={request.url} abortDelay={ABORT_DELAY} />,
       {
         [isbot(userAgent ?? '') ? 'onAllReady' : 'onShellReady']() {
+          if (resolved) {
+            return;
+          }
+
+          resolved = true;
           responseHeaders.set('Content-Type', 'text/html');
           responseHeaders.set('Cross-Origin-Embedder-Policy', 'require-corp');
           responseHeaders.set('Cross-Origin-Opener-Policy', 'same-origin');
 
-          const body = new PassThrough();
+          // Collect all chunks into a buffer then send as one response
+          const chunks: Uint8Array[] = [];
           const encoder = new TextEncoder();
 
-          const stream = new ReadableStream({
-            start(controller) {
-              controller.enqueue(
-                encoder.encode(
-                  `<!DOCTYPE html><html lang="en" data-theme="${themeStore.value}"><head>${head}</head><body><div id="root" class="w-full h-full">`,
-                ),
+          chunks.push(
+            encoder.encode(
+              `<!DOCTYPE html><html lang="en" data-theme="${themeStore.value}"><head>${head}</head><body><div id="root" class="w-full h-full">`,
+            ),
+          );
+
+          // Use a writable that collects chunks
+          const { Writable } = require('stream');
+          const writable = new Writable({
+            write(chunk: Buffer, _encoding: string, callback: () => void) {
+              chunks.push(new Uint8Array(chunk));
+              callback();
+            },
+            final(callback: () => void) {
+              chunks.push(encoder.encode('</div></body></html>'));
+              callback();
+
+              const body = new Blob(chunks).stream();
+              resolve(
+                new Response(body, {
+                  headers: responseHeaders,
+                  status: didError ? 500 : statusCode,
+                }),
               );
-              body.on('data', (chunk: Buffer) => controller.enqueue(new Uint8Array(chunk)));
-              body.on('end', () => {
-                controller.enqueue(encoder.encode('</div></body></html>'));
-                controller.close();
-              });
-              body.on('error', (err) => controller.error(err));
             },
           });
 
-          pipe(body);
-
-          resolve(
-            new Response(stream, {
-              headers: responseHeaders,
-              status: didError ? 500 : statusCode,
-            }),
-          );
+          pipe(writable);
         },
         onShellError(error: unknown) {
-          reject(error);
+          if (!resolved) {
+            reject(error);
+          }
         },
         onError(error: unknown) {
           didError = true;
