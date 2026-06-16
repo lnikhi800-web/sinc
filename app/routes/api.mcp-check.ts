@@ -1,5 +1,5 @@
 import { createScopedLogger } from '~/utils/logger';
-import { MCPService } from '~/lib/services/mcpService';
+import { MCPService } from '~/lib/services/mcpService.server';
 
 const logger = createScopedLogger('api.mcp-check');
 
