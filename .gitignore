@@ -49,5 +49,6 @@ docs/instructions/Roadmap.md
 
 # Local development and integration files
 .vercel/
-backend-runner/
+backend-runner/node_modules/
+backend-runner/projects/
 supabase/
