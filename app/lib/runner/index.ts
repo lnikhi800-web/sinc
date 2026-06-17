@@ -23,6 +23,12 @@ export type TextSearchOptions = {
   excludes?: string[];   // alias used by some internal callers
   folders?: string[];
   homeDir?: string;
+  gitignore?: boolean;
+  requireGit?: boolean;
+  globalIgnoreFiles?: boolean;
+  ignoreSymlinks?: boolean;
+  resultLimit?: number;
+  isWordMatch?: boolean;
 };
 
 export type TextSearchOnProgressCallback = (
@@ -74,7 +80,8 @@ export type PathWatcherEvent =
   | { type: 'remove_file'; path: string; buffer: Uint8Array }
   | { type: 'change'; path: string; buffer: Uint8Array }
   | { type: 'add_dir'; path: string; buffer: Uint8Array }
-  | { type: 'remove_dir'; path: string; buffer: Uint8Array };
+  | { type: 'remove_dir'; path: string; buffer: Uint8Array }
+  | { type: 'update_directory'; path: string; buffer?: Uint8Array };
 
 export interface WorkspaceRunner {
   workdir: string;

@@ -696,6 +696,6 @@ wss.on('connection', async (ws, request, projectId) => {
   });
 });
 
-server.listen(port, () => {
+server.listen(port, '0.0.0.0', () => {
   console.log(`Sinc Backend Project Runner listening on port ${port}`);
 });
