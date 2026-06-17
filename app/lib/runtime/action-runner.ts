@@ -372,8 +372,8 @@ export class ActionRunner {
 
       this.onAlert?.({
         type: 'error',
-        title: 'Dev Server Failed',
-        description: error.header,
+        title: error.header,
+        description: `Command failed: \`${action.content.trim().slice(0, 80)}\``,
         content: error.output,
       });
 

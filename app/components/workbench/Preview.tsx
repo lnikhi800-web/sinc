@@ -120,9 +120,21 @@ export const Preview = memo(({ setSelectedElement }: PreviewProps) => {
   }, [previews, findMinPortIndex]);
 
   const reloadPreview = () => {
-    if (iframeRef.current) {
-      iframeRef.current.src = iframeRef.current.src;
+    if (!iframeRef.current) return;
+
+    // Try a soft postMessage refresh first (works if Vite HMR is running)
+    try {
+      iframeRef.current.contentWindow?.postMessage({ type: 'SINC_RELOAD' }, '*');
+    } catch {
+      // Cross-origin: fall back to hard reload
     }
+
+    // Always do the hard reload after a small delay as guarantee
+    setTimeout(() => {
+      if (iframeRef.current) {
+        iframeRef.current.src = iframeRef.current.src;
+      }
+    }, 300);
   };
 
   const toggleFullscreen = async () => {
