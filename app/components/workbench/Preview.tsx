@@ -69,6 +69,8 @@ export const Preview = memo(({ setSelectedElement }: PreviewProps) => {
   const [isDeviceModeOn, setIsDeviceModeOn] = useState(false);
   const [widthPercent, setWidthPercent] = useState<number>(37.5);
   const [currentWidth, setCurrentWidth] = useState<number>(0);
+  const connectionStatus = useStore(workbenchStore.runnerConnectionStatus);
+  const installProgress = useStore(workbenchStore.installProgress);
 
   const resizingState = useRef({
     isResizing: false,
@@ -895,7 +897,148 @@ export const Preview = memo(({ setSelectedElement }: PreviewProps) => {
             alignItems: 'center',
           }}
         >
-          {activePreview ? (
+          {/* Connection lost banner */}
+          {connectionStatus === 'disconnected' && (
+            <div
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                zIndex: 50,
+                background: 'rgba(239,68,68,0.95)',
+                color: '#fff',
+                fontSize: '12px',
+                padding: '6px 16px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+              }}
+            >
+              <div className="i-ph:warning-circle" style={{ fontSize: '14px' }} />
+              <span>Backend connection lost — please refresh the page to reconnect.</span>
+            </div>
+          )}
+          {connectionStatus === 'reconnecting' && (
+            <div
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                zIndex: 50,
+                background: 'rgba(234,179,8,0.95)',
+                color: '#000',
+                fontSize: '12px',
+                padding: '6px 16px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+              }}
+            >
+              <div className="i-svg-spinners:3-dots-fade" style={{ fontSize: '14px' }} />
+              <span>Reconnecting to backend...</span>
+            </div>
+          )}
+
+          {/* Loading overlay — shown when no preview is available yet */}
+          {!activePreview ? (
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                height: '100%',
+                width: '100%',
+                gap: '20px',
+                background: 'linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 50%, #16213e 100%)',
+              }}
+            >
+              {/* Animated logo/spinner */}
+              <div style={{ position: 'relative', width: '64px', height: '64px' }}>
+                <div
+                  style={{
+                    position: 'absolute',
+                    inset: 0,
+                    borderRadius: '50%',
+                    border: '3px solid transparent',
+                    borderTopColor: '#7c3aed',
+                    borderRightColor: '#7c3aed',
+                    animation: 'spin 1s linear infinite',
+                  }}
+                />
+                <div
+                  style={{
+                    position: 'absolute',
+                    inset: '8px',
+                    borderRadius: '50%',
+                    border: '2px solid transparent',
+                    borderBottomColor: '#a78bfa',
+                    animation: 'spin 1.5s linear infinite reverse',
+                  }}
+                />
+                <div
+                  style={{
+                    position: 'absolute',
+                    inset: '18px',
+                    borderRadius: '50%',
+                    background: '#7c3aed',
+                    opacity: 0.8,
+                    animation: 'pulse 2s ease-in-out infinite',
+                  }}
+                />
+              </div>
+
+              <div style={{ textAlign: 'center', maxWidth: '320px' }}>
+                <p
+                  style={{
+                    color: '#e2e8f0',
+                    fontSize: '15px',
+                    fontWeight: 600,
+                    margin: '0 0 8px 0',
+                    letterSpacing: '-0.01em',
+                  }}
+                >
+                  Building your app...
+                </p>
+                <p
+                  style={{
+                    color: '#94a3b8',
+                    fontSize: '12px',
+                    fontFamily: 'monospace',
+                    margin: 0,
+                    minHeight: '18px',
+                    transition: 'all 0.2s ease',
+                  }}
+                >
+                  {installProgress || 'Installing dependencies\u2026'}
+                </p>
+              </div>
+
+              {/* Progress dots */}
+              <div style={{ display: 'flex', gap: '6px' }}>
+                {[0, 1, 2].map((i) => (
+                  <div
+                    key={i}
+                    style={{
+                      width: '6px',
+                      height: '6px',
+                      borderRadius: '50%',
+                      background: '#7c3aed',
+                      opacity: 0.4,
+                      animation: `pulse 1.4s ease-in-out ${i * 0.2}s infinite`,
+                    }}
+                  />
+                ))}
+              </div>
+
+              <style>{`
+                @keyframes spin { to { transform: rotate(360deg); } }
+                @keyframes pulse { 0%, 100% { opacity: 0.4; } 50% { opacity: 1; } }
+              `}</style>
+            </div>
+          ) : (
             <>
               {isDeviceModeOn && showDeviceFrameInPreview ? (
                 <div
@@ -995,10 +1138,6 @@ export const Preview = memo(({ setSelectedElement }: PreviewProps) => {
                 containerRef={iframeRef}
               />
             </>
-          ) : (
-            <div className="flex w-full h-full justify-center items-center bg-bolt-elements-background-depth-1 text-bolt-elements-textPrimary">
-              No preview available
-            </div>
           )}
 
           {isDeviceModeOn && !showDeviceFrameInPreview && (

@@ -56,6 +56,11 @@ export class WorkbenchStore {
     import.meta.hot?.data.deployAlert ?? atom<DeployAlert | undefined>(undefined);
   modifiedFiles = new Set<string>();
   artifactIdList: string[] = [];
+  runnerConnectionStatus: WritableAtom<'connected' | 'reconnecting' | 'disconnected'> =
+    import.meta.hot?.data.runnerConnectionStatus ??
+    atom<'connected' | 'reconnecting' | 'disconnected'>('connected');
+  installProgress: WritableAtom<string> =
+    import.meta.hot?.data.installProgress ?? atom<string>('');
   #globalExecutionQueue = Promise.resolve();
   constructor() {
     if (import.meta.hot) {
@@ -66,6 +71,8 @@ export class WorkbenchStore {
       import.meta.hot.data.actionAlert = this.actionAlert;
       import.meta.hot.data.supabaseAlert = this.supabaseAlert;
       import.meta.hot.data.deployAlert = this.deployAlert;
+      import.meta.hot.data.runnerConnectionStatus = this.runnerConnectionStatus;
+      import.meta.hot.data.installProgress = this.installProgress;
 
       // Ensure binary files are properly preserved across hot reloads
       const filesMap = this.files.get();
@@ -118,6 +125,18 @@ export class WorkbenchStore {
   }
   clearAlert() {
     this.actionAlert.set(undefined);
+  }
+
+  setRunnerConnectionStatus(status: 'connected' | 'reconnecting' | 'disconnected') {
+    this.runnerConnectionStatus.set(status);
+  }
+
+  setInstallProgress(line: string) {
+    // Keep only the last meaningful output line (trim whitespace/blank lines)
+    const cleaned = line.replace(/\x1b\[[\d;]*[mGKHF]/g, '').trim(); // strip ANSI codes
+    if (cleaned) {
+      this.installProgress.set(cleaned.slice(0, 80)); // cap at 80 chars for UI
+    }
   }
 
   get SupabaseAlert() {

@@ -138,6 +138,30 @@ class ActionCommandError extends Error {
   }
 }
 
+/** Regex to detect dev-server start commands that need --host injection */
+const HOST_INJECTION_REGEX = /\b(vite)\b|\b(npm|yarn|pnpm)\s+(run\s+)?dev\b/i;
+
+/**
+ * Injects --host flag into Vite/npm run dev commands so the Railway reverse
+ * proxy can reach the dev server (Vite defaults to 127.0.0.1 which the proxy
+ * cannot reach from a separate process).
+ */
+function injectViteHost(command: string): string {
+  // Already has --host — leave it alone
+  if (/--host/.test(command)) return command;
+
+  // vite → vite --host
+  let result = command.replace(/\bvite\b(?!\s*--host)(?=\s*$|\s+(?!run|build|preview|optimize|inspect|dev))/g, 'vite --host');
+
+  // npm run dev → npm run dev -- --host
+  result = result.replace(/(\bnpm\s+run\s+dev\b)((?!\s*--\s)|$)/g, '$1 -- --host');
+
+  // yarn dev / pnpm dev → yarn dev --host
+  result = result.replace(/(\b(?:yarn|pnpm)\s+(?:run\s+)?dev\b)(?!\s*--host)/g, '$1 --host');
+
+  return result;
+}
+
 export class ActionRunner {
   #runner: Promise<WorkspaceRunner>;
   #currentExecutionPromise: Promise<void> = Promise.resolve();
@@ -161,6 +185,37 @@ export class ActionRunner {
     this.onAlert = onAlert;
     this.onSupabaseAlert = onSupabaseAlert;
     this.onDeployAlert = onDeployAlert;
+  }
+
+  /**
+   * Waits for the backend to emit a 'server-ready' event, replacing the
+   * fragile 2-second magic delay that was used previously.
+   */
+  async #waitForServerReady(timeoutMs = 90_000): Promise<void> {
+    const runner = await this.#runner;
+    return new Promise<void>((resolve) => {
+      let settled = false;
+
+      const timer = setTimeout(() => {
+        if (!settled) {
+          settled = true;
+          cleanup();
+          // Don't reject — let the action continue even if we didn't get the event.
+          // The preview will just show up late once it does fire.
+          logger.warn('[ActionRunner] Timed out waiting for server-ready — continuing anyway');
+          resolve();
+        }
+      }, timeoutMs);
+
+      const cleanup = runner.on('server-ready', () => {
+        if (!settled) {
+          settled = true;
+          clearTimeout(timer);
+          cleanup();
+          resolve();
+        }
+      });
+    });
   }
 
   addAction(data: ActionCallbackData) {
@@ -261,9 +316,17 @@ export class ActionRunner {
           break;
         }
         case 'start': {
-          // making the start app non blocking
+          // Inject --host so the Railway reverse proxy can reach the Vite dev server
+          let startAction = action;
+          if (startAction.type === 'start') {
+            const hostedCmd = injectViteHost(startAction.content);
+            if (hostedCmd !== startAction.content) {
+              logger.debug(`[ActionRunner] Injected --host into start action: "${startAction.content}" → "${hostedCmd}"`);
+              startAction = { ...startAction, content: hostedCmd };
+            }
+          }
 
-          this.#runStartAction(action)
+          this.#runStartAction(startAction)
             .then(() => this.#updateAction(actionId, { status: 'complete' }))
             .catch((err: Error) => {
               if (action.abortSignal.aborted) {
@@ -285,11 +348,8 @@ export class ActionRunner {
               });
             });
 
-          /*
-           * adding a delay to avoid any race condition between 2 start actions
-           * i am up for a better approach
-           */
-          await new Promise((resolve) => setTimeout(resolve, 2000));
+          // Wait for the actual server-ready event (replaces the fragile 2-second magic delay)
+          await this.#waitForServerReady();
 
           return;
         }
@@ -335,6 +395,36 @@ export class ActionRunner {
     }
 
     const trimmedCommand = action.content.trim();
+
+    // For install commands, tap terminal output to show progress in the preview loading overlay
+    const isInstallCmd = /\b(npm|yarn|pnpm)\s+(install|i|ci)\b/i.test(trimmedCommand);
+    let progressDisposer: (() => void) | null = null;
+    if (isInstallCmd) {
+      try {
+        const { workbenchStore } = await import('~/lib/stores/workbench');
+        workbenchStore.installProgress.set('');
+        // Tap the terminal's onData to capture install output
+        // Use any cast since xterm ITerminal has different onData signatures
+        const rawDisposer = (shell.terminal as any).onData?.((data: string) => {
+          workbenchStore.setInstallProgress(data);
+        });
+        if (rawDisposer) {
+          progressDisposer = () => {
+            try {
+              if (typeof (rawDisposer as any).dispose === 'function') {
+                (rawDisposer as any).dispose();
+              } else if (typeof rawDisposer === 'function') {
+                rawDisposer();
+              }
+            } catch {}
+          };
+        }
+      } catch {
+        // Non-critical — don't fail the action if progress wiring fails
+      }
+    }
+
+
     
     // Check if the command contains a dev server/start command
     const DEV_SERVER_CMD_REGEX = /\b(npm|yarn|pnpm|npx)\s+(run\s+)?(dev|start)\b|\b(vite|expo\s+start)\b/i;
@@ -360,12 +450,16 @@ export class ActionRunner {
 
       // 2. Run the dev server part asynchronously (non-blocking, like 'start' action)
       if (startParts.length > 0) {
-        const startCommand = startParts.join(' && ');
+        // Inject --host so the Railway proxy can reach Vite at 0.0.0.0
+        const rawStartCommand = startParts.join(' && ');
+        const startCommand = injectViteHost(rawStartCommand);
+        if (startCommand !== rawStartCommand) {
+          logger.debug(`[ActionRunner] Injected --host: "${rawStartCommand}" → "${startCommand}"`);
+        }
         const dummyAction = { ...action, content: startCommand, type: 'start' } as any;
         
         this.#runStartAction(dummyAction)
           .then(() => {
-            // Once the start action has initiated successfully, resolve this shell action as complete
             this.#updateAction(actionId, { status: 'complete' });
           })
           .catch((err: Error) => {
@@ -375,9 +469,9 @@ export class ActionRunner {
             this.#updateAction(actionId, { status: 'failed', error: 'Action failed' });
             logger.error(`[shell-dev-start]:Action failed\n\n`, err);
           });
-        
-        // Wait a brief delay to ensure HMR is initiated, then resolve
-        await new Promise((resolve) => setTimeout(resolve, 2000));
+
+        // Wait for the actual server-ready event instead of a magic 2s delay
+        await this.#waitForServerReady();
         return;
       }
     }
@@ -394,6 +488,18 @@ export class ActionRunner {
       logger.debug(`[${action.type}]:Aborting Action\n\n`, action);
       action.abort();
     });
+
+    // Clean up install progress tap
+    if (progressDisposer) {
+      try { progressDisposer(); } catch {}
+      progressDisposer = null;
+      // Clear the progress text once install is done
+      try {
+        const { workbenchStore } = await import('~/lib/stores/workbench');
+        workbenchStore.installProgress.set('');
+      } catch {}
+    }
+
     logger.debug(`${action.type} Shell Response: [exit code:${resp?.exitCode}]`);
 
     if (resp?.exitCode != 0) {
@@ -401,6 +507,7 @@ export class ActionRunner {
       throw new ActionCommandError(enhancedError.title, enhancedError.details);
     }
   }
+
 
   async #runStartAction(action: ActionState) {
     if (action.type !== 'start') {
