@@ -13,7 +13,7 @@ import { createSummary } from '~/lib/.server/llm/create-summary';
 import { extractPropertiesFromMessage } from '~/lib/.server/llm/utils';
 import type { DesignScheme } from '~/types/design-scheme';
 import { StreamRecoveryManager } from '~/lib/.server/llm/stream-recovery';
-import { TransformStream } from 'node:stream/web';
+import { TransformStream, ReadableStream } from 'node:stream/web';
 
 export async function action(args: ActionFunctionArgs) {
   return chatAction(args);
@@ -89,7 +89,7 @@ async function chatAction({ context, request }: ActionFunctionArgs) {
 
     let lastChunk: string | undefined = undefined;
 
-    const dataStream = createDataStream({
+    const rawDataStream = createDataStream({
       async execute(dataStream) {
         streamRecovery.startMonitoring();
 
@@ -381,7 +381,11 @@ async function chatAction({ context, request }: ActionFunctionArgs) {
 
         return `Custom error: ${errorMessage}`;
       },
-    }).pipeThrough(
+    });
+
+    const nativeDataStream = toNativeWebStream(rawDataStream);
+
+    const dataStream = nativeDataStream.pipeThrough(
       new TransformStream({
         transform: (chunk, controller) => {
           if (!lastChunk) {
@@ -419,7 +423,7 @@ async function chatAction({ context, request }: ActionFunctionArgs) {
       }) as any,
     );
 
-    return new Response(dataStream, {
+    return new Response(dataStream as any, {
       status: 200,
       headers: {
         'Content-Type': 'text/event-stream; charset=utf-8',
@@ -461,4 +465,25 @@ async function chatAction({ context, request }: ActionFunctionArgs) {
       statusText: 'Error',
     });
   }
+}
+
+function toNativeWebStream(polyfilledStream: any): ReadableStream {
+  const reader = polyfilledStream.getReader();
+  return new ReadableStream({
+    async pull(controller) {
+      try {
+        const { done, value } = await reader.read();
+        if (done) {
+          controller.close();
+        } else {
+          controller.enqueue(value);
+        }
+      } catch (error) {
+        controller.error(error);
+      }
+    },
+    cancel(reason) {
+      return reader.cancel(reason);
+    },
+  });
 }
