@@ -15,11 +15,11 @@ RUN npm install
 COPY server.js ./
 
 # Set environment defaults
-ENV PORT=8080
+ENV PORT=5173
 ENV PROJECTS_DIR=/app/projects
 ENV NODE_ENV=production
 
 # Expose server port
-EXPOSE 8080
+EXPOSE 5173
 
 CMD ["npm", "start"]
