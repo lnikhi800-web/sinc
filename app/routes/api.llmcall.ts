@@ -8,6 +8,7 @@ import { LLMManager } from '~/lib/modules/llm/manager';
 import type { ModelInfo } from '~/lib/modules/llm/types';
 import { getApiKeysFromCookie, getProviderSettingsFromCookie } from '~/lib/api/cookies';
 import { createScopedLogger } from '~/utils/logger';
+import { toNativeWebStream } from '~/utils/stream';
 
 export async function action(args: ActionFunctionArgs) {
   return llmCallAction(args);
@@ -111,7 +112,7 @@ async function llmCallAction({ context, request }: ActionFunctionArgs) {
         providerSettings,
       });
 
-      return new Response(result.textStream, {
+      return new Response(toNativeWebStream(result.textStream) as any, {
         status: 200,
         headers: {
           'Content-Type': 'text/plain; charset=utf-8',
