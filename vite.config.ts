@@ -44,14 +44,14 @@ export default defineConfig((config) => {
     plugins: [
       ssrFilterPlugin(
         nodePolyfills({
-          include: ['buffer', 'process', 'stream', 'path', 'util'],
+          include: ['buffer', 'process', 'stream'],
           globals: {
             Buffer: true,
             process: true,
             global: true,
           },
           protocolImports: true,
-          exclude: ['child_process', 'fs'],
+          exclude: ['child_process', 'fs', 'path', 'util'],
         })
       ),
       {
@@ -82,15 +82,6 @@ export default defineConfig((config) => {
       chrome129IssuePlugin(),
       config.mode === 'production' && optimizeCssModules({ apply: 'build' }),
     ].filter(Boolean),
-    resolve: {
-      alias: !config.ssrBuild
-        ? {
-            '@modelcontextprotocol/sdk/client/streamableHttp.js': 'path-browserify',
-            'ai/mcp-stdio': 'path-browserify',
-            'undici': 'path-browserify',
-          }
-        : {},
-    },
     envPrefix: [
       'VITE_',
       'OPENAI_LIKE_API_BASE_URL',
