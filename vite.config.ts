@@ -27,7 +27,7 @@ function ssrFilterPlugin(plugin: any) {
 }
 
 export default defineConfig((config) => {
-  console.log('Vite Config Env:', { ssrBuild: config.ssrBuild, command: config.command, mode: config.mode });
+  console.log('Vite Config Env:', { ssrBuild: config.isSsrBuild, command: config.command, mode: config.mode });
   console.log('Process ARGV:', process.argv);
   return {
     define: {
@@ -56,7 +56,7 @@ export default defineConfig((config) => {
       ),
       {
         name: 'buffer-polyfill',
-        transform(code, id) {
+        transform(code: string, id: string) {
           if (id.includes('env.mjs')) {
             return {
               code: `import { Buffer } from 'buffer';\n${code}`,

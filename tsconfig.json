@@ -39,6 +39,7 @@
     "node_modules",
     "backend-runner/projects/**",
     "build/**",
-    "dist/**"
+    "dist/**",
+    "functions"
   ]
 }
