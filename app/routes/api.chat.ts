@@ -13,6 +13,7 @@ import { createSummary } from '~/lib/.server/llm/create-summary';
 import { extractPropertiesFromMessage } from '~/lib/.server/llm/utils';
 import type { DesignScheme } from '~/types/design-scheme';
 import { StreamRecoveryManager } from '~/lib/.server/llm/stream-recovery';
+import { TransformStream } from 'node:stream/web';
 
 export async function action(args: ActionFunctionArgs) {
   return chatAction(args);
@@ -415,7 +416,7 @@ async function chatAction({ context, request }: ActionFunctionArgs) {
           const str = typeof transformedChunk === 'string' ? transformedChunk : JSON.stringify(transformedChunk);
           controller.enqueue(encoder.encode(str));
         },
-      }),
+      }) as any,
     );
 
     return new Response(dataStream, {
