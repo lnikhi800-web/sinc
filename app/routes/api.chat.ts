@@ -336,8 +336,19 @@ async function chatAction({ context, request }: ActionFunctionArgs) {
         result.mergeIntoDataStream(dataStream);
       },
       onError: (error: any) => {
+        // Log details to the server console for troubleshooting
+        logger.error('DataStream error:', error);
+        if (error.cause) {
+          logger.error('DataStream error cause:', error.cause);
+        }
+
         // Provide more specific error messages for common issues
-        const errorMessage = error.message || 'Unknown error';
+        let errorMessage = error.message || 'Unknown error';
+
+        if (error.cause) {
+          const causeMessage = error.cause.message || String(error.cause);
+          errorMessage += ` (Cause: ${causeMessage})`;
+        }
 
         if (errorMessage.includes('model') && errorMessage.includes('not found')) {
           return 'Custom error: Invalid model selected. Please check that the model name is correct and available.';
