@@ -208,7 +208,7 @@ app.use('/preview/:projectId/:port', (req, res, next) => {
 });
 
 // Start HTTP Server
-const port = process.env.PORT || 8080;
+const port = process.env.NODE_ENV === 'production' ? 5173 : (process.env.PORT || 8080);
 const server = createServer(app);
 
 // 3. WebSocket Server for shell terminals and filesync
