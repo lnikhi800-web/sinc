@@ -13,7 +13,7 @@ import { createSummary } from '~/lib/.server/llm/create-summary';
 import { extractPropertiesFromMessage } from '~/lib/.server/llm/utils';
 import type { DesignScheme } from '~/types/design-scheme';
 import { StreamRecoveryManager } from '~/lib/.server/llm/stream-recovery';
-import { TransformStream, ReadableStream } from 'node:stream/web';
+import { ReadableStream } from 'node:stream/web';
 
 export async function action(args: ActionFunctionArgs) {
   return chatAction(args);
@@ -383,45 +383,7 @@ async function chatAction({ context, request }: ActionFunctionArgs) {
       },
     });
 
-    const nativeDataStream = toNativeWebStream(rawDataStream);
-
-    const dataStream = nativeDataStream.pipeThrough(
-      new TransformStream({
-        transform: (chunk, controller) => {
-          if (!lastChunk) {
-            lastChunk = ' ';
-          }
-
-          if (typeof chunk === 'string') {
-            if (chunk.startsWith('g') && !lastChunk.startsWith('g')) {
-              controller.enqueue(encoder.encode(`0: "<div class=\\"__boltThought__\\">"\n`));
-            }
-
-            if (lastChunk.startsWith('g') && !chunk.startsWith('g')) {
-              controller.enqueue(encoder.encode(`0: "</div>\\n"\n`));
-            }
-          }
-
-          lastChunk = chunk;
-
-          let transformedChunk = chunk;
-
-          if (typeof chunk === 'string' && chunk.startsWith('g')) {
-            let content = chunk.split(':').slice(1).join(':');
-
-            if (content.endsWith('\n')) {
-              content = content.slice(0, content.length - 1);
-            }
-
-            transformedChunk = `0:${content}\n`;
-          }
-
-          // Convert the string stream to a byte stream
-          const str = typeof transformedChunk === 'string' ? transformedChunk : JSON.stringify(transformedChunk);
-          controller.enqueue(encoder.encode(str));
-        },
-      }) as any,
-    );
+    const dataStream = toTransformedNativeStream(rawDataStream);
 
     return new Response(dataStream as any, {
       status: 200,
@@ -467,17 +429,50 @@ async function chatAction({ context, request }: ActionFunctionArgs) {
   }
 }
 
-function toNativeWebStream(polyfilledStream: any): ReadableStream {
+function toTransformedNativeStream(polyfilledStream: any): ReadableStream {
   const reader = polyfilledStream.getReader();
+  const encoder = new TextEncoder();
+  let lastChunk: any = undefined;
+
   return new ReadableStream({
     async pull(controller) {
       try {
-        const { done, value } = await reader.read();
+        const { done, value: chunk } = await reader.read();
         if (done) {
           controller.close();
-        } else {
-          controller.enqueue(value);
+          return;
         }
+
+        if (!lastChunk) {
+          lastChunk = ' ';
+        }
+
+        if (typeof chunk === 'string') {
+          if (chunk.startsWith('g') && !lastChunk.startsWith('g')) {
+            controller.enqueue(encoder.encode(`0: "<div class=\\"__boltThought__\\">"\n`));
+          }
+
+          if (lastChunk.startsWith('g') && !chunk.startsWith('g')) {
+            controller.enqueue(encoder.encode(`0: "</div>\\n"\n`));
+          }
+        }
+
+        lastChunk = chunk;
+
+        let transformedChunk = chunk;
+
+        if (typeof chunk === 'string' && chunk.startsWith('g')) {
+          let content = chunk.split(':').slice(1).join(':');
+
+          if (content.endsWith('\n')) {
+            content = content.slice(0, content.length - 1);
+          }
+
+          transformedChunk = `0:${content}\n`;
+        }
+
+        const str = typeof transformedChunk === 'string' ? transformedChunk : JSON.stringify(transformedChunk);
+        controller.enqueue(encoder.encode(str));
       } catch (error) {
         controller.error(error);
       }
